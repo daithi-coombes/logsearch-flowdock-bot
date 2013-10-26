@@ -1,37 +1,38 @@
-var https = require('https');
 var flow = require('./flowdockToken');
+var https = require('https');
 
 var target = '/users';
 var endpoint = 'https://' + flow.token + '@api.flowdock.com';
+var data = '';
 
-function flowdock_get_users(){
-	https.get(
-		endpoint + target,
-		function(res){
-			console.log("Status code: " + res.statusCode);
-			res.setEncoding('utf8');
-			res.on('data', function (chunk) {
-				console.log('BODY: ===============>');
-				j = JSON.parse(chunk);
-				console.log(j[0]);
-			});
-		}
-	).on('error',function(res){
-		console.log('Got error ' + res.message );
-	});
-}
-flowdock_get_users();
-setInterval(flowdock_get_users, 5000);
 
-/**
- * @deprecated http server, if needed
- *
+var flowdock = {
+
+	serverResponse : {},
+	url : endpoint + target,
+
+	serverStart : function(req, res){
+		res.writeHead('200',{'Content-Type': 'text/json'});
+		flowdock.serverResponse = res;
+		console.log('Server started: ' + flowdock.url);
+		https.get(
+			endpoint + target,
+			flowdock.parseResponse
+		).on('error',function(res){
+			console.log('Got error ' + res.message );
+		});
+	},
+
+	parseResponse : function( resp ){
+		console.log('Parsing response...');
+		resp.setEncoding('utf8');
+		resp.on('data', function (chunk) {
+			flowdock.serverResponse.end(chunk);
+		});
+	}
+};
+
 //server
 var http = require('http');
-http.createServer(function(req, res){
-	res.writeHead('200',{'Content-Type': 'text/plain'});
-	res.end('Check console for results');
-	setInterval(flowdock_get_users, 5000);
-}).listen(1337, '127.0.0.1');
+http.createServer(flowdock.serverStart).listen(1337, '127.0.0.1');
 console.log('Server is listening on http://127.0.0.1:1337/');
-*/
