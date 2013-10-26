@@ -25,9 +25,17 @@ var flow = 'elasticsearch-poc';
 //vars
 var target = '/flows/' + organization + '/' + flow + '/users';
 var flow = require('./flowdockToken');
+var http = require('http');
 var https = require('https');
 var endpoint = 'https://' + flow.token + '@api.flowdock.com';
+var winston = require('winston');
 
+//setup winston logger
+var logger = new(winston.Logger)({
+	transports : [
+		new winston.transports.File({ filename: 'flowdock.log' })
+	]
+});
 
 /**
  * Flowdock Object 
@@ -37,7 +45,7 @@ var endpoint = 'https://' + flow.token + '@api.flowdock.com';
 var FlowDock = {
 
 	serverResponse : {},
-	url : endpoint + target,
+	url : endpoint + target,	//global scope
 
 	/**
 	 * Parses requests to a http server.
@@ -51,12 +59,25 @@ var FlowDock = {
 		FlowDock.serverResponse = res;
 		console.log('Server started: ' + FlowDock.url);
 
+		setInterval("FlowDock.requestGet", 5000);
+
+	},
+
+	requestGet : function(){
+
+		console.log('Request sent');
+
 		https.get(
 			endpoint + target,
-			FlowDock.parseResponse
+			function( resp ){
+				console.log('Parsing response...');
+				resp.setEncoding('utf8');
+				resp.on( 'data', FlowDock.parseResponse );
+			}
 		).on('error',function(res){
 			console.log('Got error ' + res.message );
 		});
+
 	},
 
 	/**
@@ -65,26 +86,23 @@ var FlowDock = {
 	 * @param  {http.ServerResponse} resp The server response
 	 * @return {void}
 	 */
-	parseResponse : function( resp ){
-		console.log('Parsing response...');
-		resp.setEncoding('utf8');
-		resp.on('data', FlowDock.printResponse);
-	},
-
-	printResponse : function (chunk) {
+	parseResponse :  function (chunk) {
 		var j = JSON.parse(chunk);
 		var res = [];
 		for(var x=0; x<j.length; x++)
 			res.push({
 				id : j[x].id,
 				nick : j[x].nick,
-				last_activity : j[x].last_activity
+				last_activity : new Date(j[x].last_activity)
 			});
-		FlowDock.serverResponse.end( JSON.stringify(res) );
+		logger.warn( JSON.stringify(res) );
+		//FlowDock.serverResponse.end( JSON.stringify(res) );
 	}
 };
 
+//call FlowDock.requestGet every 5 minutes
+setInterval(function(){ FlowDock.requestGet(); }, 300000);
+
 //server
-var http = require('http');
-http.createServer(FlowDock.serverStart).listen(1337, '127.0.0.1');
-console.log('Server is listening on http://127.0.0.1:1337/');
+//http.createServer(FlowDock.serverStart).listen(1337, '127.0.0.1');
+//console.log('Server is listening on http://127.0.0.1:1337/');

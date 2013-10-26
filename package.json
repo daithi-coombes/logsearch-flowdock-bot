@@ -1,0 +1,12 @@
+{
+	"name" : "logsearch-flowdock-bot",
+	"version" : "0.0.1",
+	"description" : "Flowdock logs bot for LogSearch Development Flow. http://github.com/cityindex/logsearch-development-flow",
+	"repository" : {
+		"type" : "git",
+		"url" : "http://github.com/cityindex/logsearch-flowdock-bot"
+	},
+	"dependencies" : {
+		"winston" : "0.7.2"
+	}
+}
