@@ -4,7 +4,7 @@
  * Create a file `flowdockToken` and place one line init with your flowdock
  * token. Like so:
  * <code>
- * exports.token = '97182bbaa8b2f29dff102b729af468b8';
+ * exports.token = 'xxxxxx';
  * </code>
  *
  * Set the target variable below, `flow`, like so:
@@ -31,6 +31,7 @@ var endpoint = 'https://' + flow.token + '@api.flowdock.com';
 /**
  * Flowdock Object 
  * @type {FlowDock}
+ * @constructor
  */
 var FlowDock = {
 
