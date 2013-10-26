@@ -16,6 +16,8 @@
  * <code>
  * node server.js
  * </code>
+ *
+ * @author Daithi Coombes
  */
 
 //set the api target
