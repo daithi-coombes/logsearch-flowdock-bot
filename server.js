@@ -1,5 +1,6 @@
 /**
- * Nodejs server for FlowDock API
+ * Nodejs server for FlowDock API.
+ * Gets user activity information for a flow
  *
  * Create a file `flowdockToken` and place one line init with your flowdock
  * token. Like so:
@@ -7,10 +8,7 @@
  * exports.token = 'xxxxxx';
  * </code>
  *
- * Set the target variable below, `flow`, like so:
- * <code>
- * var target = '/users';
- * <code>
+ * Set the variables below
  *
  * from command line run:
  * <code>
@@ -20,9 +18,12 @@
  * @author Daithi Coombes
  */
 
-//set the api target
-var target = '/users';
+//set the organization and flow
+var organization = 'cityindexlabs';
+var flow = 'elasticsearch-poc';
 
+//vars
+var target = '/flows/' + organization + '/' + flow + '/users';
 var flow = require('./flowdockToken');
 var https = require('https');
 var endpoint = 'https://' + flow.token + '@api.flowdock.com';
@@ -49,6 +50,7 @@ var FlowDock = {
 		res.writeHead('200',{'Content-Type': 'text/json'});
 		FlowDock.serverResponse = res;
 		console.log('Server started: ' + FlowDock.url);
+
 		https.get(
 			endpoint + target,
 			FlowDock.parseResponse
@@ -66,9 +68,19 @@ var FlowDock = {
 	parseResponse : function( resp ){
 		console.log('Parsing response...');
 		resp.setEncoding('utf8');
-		resp.on('data', function (chunk) {
-			FlowDock.serverResponse.end(chunk);
-		});
+		resp.on('data', FlowDock.printResponse);
+	},
+
+	printResponse : function (chunk) {
+		var j = JSON.parse(chunk);
+		var res = [];
+		for(var x=0; x<j.length; x++)
+			res.push({
+				id : j[x].id,
+				nick : j[x].nick,
+				last_activity : j[x].last_activity
+			});
+		FlowDock.serverResponse.end( JSON.stringify(res) );
 	}
 };
 
