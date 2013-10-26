@@ -47,18 +47,18 @@ var FlowDock = {
 	 */
 	serverStart : function(req, res){
 		res.writeHead('200',{'Content-Type': 'text/json'});
-		flowdock.serverResponse = res;
-		console.log('Server started: ' + flowdock.url);
+		FlowDock.serverResponse = res;
+		console.log('Server started: ' + FlowDock.url);
 		https.get(
 			endpoint + target,
-			flowdock.parseResponse
+			FlowDock.parseResponse
 		).on('error',function(res){
 			console.log('Got error ' + res.message );
 		});
 	},
 
 	/**
-	 * Parses a request to flowdock api.
+	 * Parses a request to FlowDock api.
 	 * Callback function for https.get
 	 * @param  {http.ServerResponse} resp The server response
 	 * @return {void}
@@ -67,12 +67,12 @@ var FlowDock = {
 		console.log('Parsing response...');
 		resp.setEncoding('utf8');
 		resp.on('data', function (chunk) {
-			flowdock.serverResponse.end(chunk);
+			FlowDock.serverResponse.end(chunk);
 		});
 	}
 };
 
 //server
 var http = require('http');
-http.createServer(flowdock.serverStart).listen(1337, '127.0.0.1');
+http.createServer(FlowDock.serverStart).listen(1337, '127.0.0.1');
 console.log('Server is listening on http://127.0.0.1:1337/');
