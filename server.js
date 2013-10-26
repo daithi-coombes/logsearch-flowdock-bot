@@ -101,6 +101,7 @@ var FlowDock = {
 };
 
 //call FlowDock.requestGet every 5 minutes
+FlowDock.requestGet();
 setInterval(function(){ FlowDock.requestGet(); }, 300000);
 
 //server
