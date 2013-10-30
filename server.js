@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /**
  * Nodejs server for FlowDock API.
  * Gets user activity information for a flow
@@ -18,13 +20,10 @@
  * @author Daithi Coombes
  */
 
-//set the organization and flow
-var organization = 'cityindexlabs';
-var flow = 'elasticsearch-poc';
-
 //vars
-var target = '/flows/' + organization + '/' + flow + '/users';
 var flow = require('./flowdockToken');
+console.log(flow);
+var target = '/flows/' + flow.organization + '/' + flow.flow + '/users';
 var http = require('http');
 var https = require('https');
 var endpoint = 'https://' + flow.token + '@api.flowdock.com';
