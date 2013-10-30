@@ -11,6 +11,14 @@ install
 from shell run `npm install`
 `$npm install`
 
+Create a file caled `flowdockConfig.js` and define in your API key, organisation
+and flow like so:
+```js
+exports.token = 'xxxxxxxx';
+exports.flow = 'xxxxxxxx';
+exports.organisation = 'xxxxxxxx';
+```
+
 run bot
 =======
 `node server.js`

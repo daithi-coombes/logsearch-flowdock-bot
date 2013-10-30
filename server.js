@@ -21,9 +21,9 @@
  */
 
 //vars
-var flow = require('./flowdockToken');
-console.log(flow);
+var flow = require('./flowdockConfig');
 var target = '/flows/' + flow.organization + '/' + flow.flow + '/users';
+console.log(target);
 var http = require('http');
 var https = require('https');
 var endpoint = 'https://' + flow.token + '@api.flowdock.com';
@@ -69,7 +69,6 @@ var FlowDock = {
 		https.get(
 			endpoint + target,
 			function( resp ){
-				console.log('Parsing response...');
 				resp.setEncoding('utf8');
 				resp.on( 'data', FlowDock.parseResponse );
 			}
@@ -86,6 +85,7 @@ var FlowDock = {
 	 * @return {void}
 	 */
 	parseResponse :  function (chunk) {
+		console.log('Parsing response...');
 		var j = JSON.parse(chunk);
 		var res = [];
 		for(var x=0; x<j.length; x++)
