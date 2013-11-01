@@ -1,8 +1,8 @@
 {
   "network": {
     "servers": [ "localhost:5043" ],
-    "ssl key" : "/app/data/lumberjack.key",
-    "ssl ca" : "/app/data/lumberjack.crt",
+    "ssl key" : "/home/daithi/.ssh/lumberjack.key",
+    "ssl ca" : "/home/daithi/.ssh/lumberjack.crt",
     "timeout": 15
   },
 
@@ -10,7 +10,8 @@
     {
       "paths": [ 
         "/var/log/messages",
-        "/var/log/*.log"
+        "/var/log/*.log",
+        "/var/www/cityindex.loc/logsearch-development-flow/example/logsearch-flowdock-bot/flowdock.log"
       ],
 
       "fields": { "type": "syslog" }
