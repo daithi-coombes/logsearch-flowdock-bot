@@ -1,0 +1,27 @@
+{
+  "network": {
+    "servers": [ "localhost:5043" ],
+    "ssl key" : "/app/data/lumberjack.key",
+    "ssl ca" : "/app/data/lumberjack.crt",
+    "timeout": 15
+  },
+
+  "files": [
+    {
+      "paths": [ 
+        "/var/log/messages",
+        "/var/log/*.log"
+      ],
+
+      "fields": { "type": "syslog" }
+    }, {
+      "paths": [ "-" ],
+      "fields": { "type": "stdin" }
+    }, {
+      "paths": [
+        "/var/log/apache/httpd-*.log"
+      ],
+      "fields": { "type": "apache" }
+    }
+  ]
+}
