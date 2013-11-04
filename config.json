@@ -1,28 +1,17 @@
 {
   "network": {
     "servers": [ "localhost:5043" ],
-    "ssl key" : "/home/daithi/.ssh/lumberjack.key",
-    "ssl ca" : "/home/daithi/.ssh/lumberjack.crt",
-    "timeout": 15
+    "ssl key" : "./lumberjack.key",
+    "ssl ca" : "./lumberjack.crt"
   },
 
   "files": [
     {
       "paths": [ 
-        "/var/log/messages",
-        "/var/log/*.log",
-        "/var/www/cityindex.loc/logsearch-development-flow/example/logsearch-flowdock-bot/flowdock.log"
+        "./flowdock.log"
       ],
 
-      "fields": { "type": "syslog" }
-    }, {
-      "paths": [ "-" ],
-      "fields": { "type": "stdin" }
-    }, {
-      "paths": [
-        "/var/log/apache/httpd-*.log"
-      ],
-      "fields": { "type": "apache" }
+      "fields": { "flow": "", "data": "" }
     }
   ]
 }

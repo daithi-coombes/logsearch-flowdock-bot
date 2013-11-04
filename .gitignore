@@ -3,3 +3,6 @@ flowdock.log
 node_modules
 npm-debug.log
 .lumberjack
+*.crt
+*.key
+*.bak
