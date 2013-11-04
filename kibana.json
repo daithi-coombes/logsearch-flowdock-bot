@@ -64,6 +64,33 @@
           "mode": "terms",
           "default_field": "DEFAULT",
           "spyable": true
+        },
+        {
+          "error": false,
+          "span": 4,
+          "editable": true,
+          "type": "pie",
+          "loadingEditor": false,
+          "index": "test",
+          "search_type": "count",
+          "query": {
+            "field": "@fields.data.flow"
+          },
+          "size": 10,
+          "exclude": [],
+          "donut": false,
+          "tilt": true,
+          "legend": "above",
+          "labels": true,
+          "mode": "terms",
+          "default_field": "DEFAULT",
+          "spyable": true,
+          "queries": {
+            "mode": "all",
+            "ids": [
+              0
+            ]
+          }
         }
       ],
       "notice": false
@@ -100,7 +127,10 @@
             "font-size": "9pt"
           },
           "overflow": "min-height",
-          "fields": [],
+          "fields": [
+            "@fields.data.flow",
+            "@fields.data.last_activity"
+          ],
           "highlight": [],
           "sortable": true,
           "header": true,
