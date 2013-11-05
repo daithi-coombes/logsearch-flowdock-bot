@@ -47,7 +47,7 @@
           "type": "pie",
           "loadingEditor": false,
           "query": {
-            "field": "@fields.data.flow"
+            "field": "@fields.data.organization"
           },
           "queries": {
             "mode": "all",
@@ -129,7 +129,9 @@
           "overflow": "min-height",
           "fields": [
             "@fields.data.flow",
-            "@fields.data.last_activity"
+            "@fields.data.nick",
+            "@fields.data.last_activity",
+            "@timestamp"
           ],
           "highlight": [],
           "sortable": true,
