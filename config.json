@@ -7,7 +7,7 @@
 
   "files": [
     {
-      "paths": [ 
+      "paths": [
         "./flowdock.log"
       ],
 
