@@ -34,6 +34,71 @@
   },
   "rows": [
     {
+      "title": "Events over time",
+      "height": "150px",
+      "editable": true,
+      "collapse": false,
+      "collapsable": true,
+      "panels": [
+        {
+          "span": 12,
+          "editable": true,
+          "group": [
+            "default"
+          ],
+          "type": "histogram",
+          "mode": "count",
+          "time_field": "@timestamp",
+          "value_field": null,
+          "auto_int": true,
+          "resolution": 100,
+          "interval": "1y",
+          "fill": 1,
+          "linewidth": 1,
+          "timezone": "utc",
+          "spyable": true,
+          "zoomlinks": true,
+          "bars": false,
+          "stack": true,
+          "points": false,
+          "lines": true,
+          "legend": true,
+          "x-axis": true,
+          "y-axis": true,
+          "percentage": false,
+          "interactive": true,
+          "queries": {
+            "mode": "all",
+            "ids": [
+              0
+            ]
+          },
+          "title": "Events over time",
+          "intervals": [
+            "auto",
+            "1s",
+            "1m",
+            "5m",
+            "10m",
+            "30m",
+            "1h",
+            "3h",
+            "12h",
+            "1d",
+            "1w",
+            "1M",
+            "1y"
+          ],
+          "options": true,
+          "tooltip": {
+            "value_type": "individual",
+            "query_as_alias": false
+          }
+        }
+      ],
+      "notice": false
+    },
+    {
       "title": "Charts",
       "height": "150px",
       "editable": true,
@@ -91,6 +156,38 @@
               0
             ]
           }
+        },
+        {
+          "error": false,
+          "span": 3,
+          "editable": true,
+          "group": [
+            "default"
+          ],
+          "type": "terms",
+          "queries": {
+            "mode": "all",
+            "ids": [
+              0
+            ]
+          },
+          "field": "_type",
+          "exclude": [],
+          "missing": true,
+          "other": true,
+          "size": 10,
+          "order": "count",
+          "style": {
+            "font-size": "10pt"
+          },
+          "donut": false,
+          "tilt": false,
+          "labels": true,
+          "arrangement": "horizontal",
+          "chart": "table",
+          "counter_pos": "above",
+          "spyable": true,
+          "title": "Document Types"
         }
       ],
       "notice": false
@@ -119,7 +216,7 @@
           "pages": 5,
           "offset": 0,
           "sort": [
-            "_score",
+            "@timestamp",
             "desc"
           ],
           "group": "default",
@@ -160,7 +257,7 @@
   "pulldowns": [
     {
       "type": "query",
-      "collapse": false,
+      "collapse": true,
       "notice": false,
       "enable": true,
       "query": "*",
@@ -170,7 +267,7 @@
     },
     {
       "type": "filtering",
-      "collapse": false,
+      "collapse": true,
       "notice": false,
       "enable": true
     }
@@ -205,7 +302,8 @@
         "2h",
         "1d"
       ],
-      "timefield": "@timestamp"
+      "timefield": "@timestamp",
+      "now": false
     }
   ],
   "loader": {
