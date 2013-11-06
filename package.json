@@ -5,8 +5,5 @@
 	"repository" : {
 		"type" : "git",
 		"url" : "http://github.com/cityindex/logsearch-flowdock-bot"
-	},
-	"dependencies" : {
-		"winston" : "0.7.2"
 	}
 }
