@@ -11,7 +11,7 @@
         "./flowdock.log"
       ],
 
-      "fields": { "type" : "flowdock-bot" }
+      "fields": { "type" : "flowdock-bot", "data" : "" }
     }
   ]
 }

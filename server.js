@@ -141,18 +141,27 @@ var FlowDock = {
 				nick : j[x].nick,
 				last_activity : new Date(j[x].last_activity)
 			};
-			FlowDock.log( res );
+			winston = false;
+			FlowDock.log( res, winston );
 		}
 	},//end parseResponse()
 
 	/**
 	 * Log data to a file
 	 * @param  {json} data The data to be logged
+	 * @param {boolean} winston If set to true, then winston logger will be
+	 * used. Default false, use `fs` module will be used
 	 * @return {void}
 	 */
-	log : function( data ){
+	log : function( data, winston ){
 
-		logger.info( JSON.stringify( data ) );
+		if( winston )
+			logger.info( JSON.stringify( data ) );
+
+		else{
+			var log = fs.createWriteStream(filename, {'flags': 'a'});
+			log.write( JSON.stringify( data ) + '\n' );    
+		}
 	}//end log()
 
 };//end FlowDock Object
@@ -160,4 +169,4 @@ var FlowDock = {
 
 //main()
 FlowDock.getFlows();
-setInterval(function(){ FlowDock.getFlows(); }, timer);
+setInterval(function(){ FlowDock.getFlows(); }, 1000); //timer);
