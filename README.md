@@ -38,3 +38,11 @@ run lumberjack
 Make sure the [logsearch vm is running](https://github.com/cityindex/logsearch/wiki/Quick-Start-Guide)
 Then from within the `logsearch-flowdock-bot` repo, run:
 `/opt/lumberjack/bin/lumberjack.sh -config config.json`
+
+installing kibana dashboard
+===========================
+Once you have the logsearch vm running, you can install the dashboard by
+ - navigating to http://localhost:4567 
+ - click the `load` icon in the top
+ - select `advanced`
+ - upload `kibana.json` from this repo
