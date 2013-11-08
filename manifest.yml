@@ -1,0 +1,4 @@
+---
+applications:
+- name: logsearch-flowdock-bot
+  command: node server.js
