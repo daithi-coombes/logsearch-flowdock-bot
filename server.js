@@ -20,8 +20,14 @@
  * @author Daithi Coombes <webeire@gmail.com>
  */
 
+//get environment variables
+var flow = {
+	organization : process.env.FLOW_ORG,
+	flow: process.env.FLOW_NAME,
+	token: process.env.FLOW_TOKEN
+};
+
 //includes
-var flow = require('./flowdockConfig');
 var winston = require('winston');
 var fs = require('fs');
 var http = require('http');
@@ -46,7 +52,6 @@ var logger = new (winston.Logger)({
     ]
   });
 //end Logging with winston
-
 
 /**
  * Flowdock Object 
@@ -100,6 +105,7 @@ var FlowDock = {
 	getFlows : function(){
 
 		console.log('Requesting flows');
+		console.log(flow);
 
 		https.get(
 			endpoint + '/flows',

@@ -29,11 +29,23 @@ exports.flow = 'xxxxxxxx';
 exports.organisation = 'xxxxxxxx';
 ```
 
-run bot
+push to cloudfoundry
+====================
+Once you have cloned this repo, cd into the directory and set the above config
+vars as environment variables:
+```bash
+cf set-env logsearch-flowdock-bot FLOW $flowName
+cf set-env logsearch-flowdock-bot ORGANIZATION $orgName
+cf set-env logsearch-flowdock-bot TOKEN $token
+```
+Replace `$flowName`,`$orgName`,`$token` with their respective values
+
+
+run bot locally
 =======
 `node server.js`
 
-run lumberjack
+run lumberjack locally
 ==============
 Make sure the [logsearch vm is running](https://github.com/cityindex/logsearch/wiki/Quick-Start-Guide)
 Then from within the `logsearch-flowdock-bot` repo, run:
