@@ -177,8 +177,8 @@ var FlowDock = {
 
 
 //main()
-//FlowDock.getFlows();
-//setInterval(function(){ FlowDock.getFlows(); }, 1000); //timer);
+FlowDock.getFlows();
+setInterval(function(){ FlowDock.getFlows(); }, 1000); //timer);
 
 //http server
 var http = require('http');
