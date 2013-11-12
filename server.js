@@ -205,26 +205,3 @@ var FlowDock = {
 //main()
 FlowDock.getFlows();
 setInterval(function(){ FlowDock.getFlows(); }, 1000); //timer);
-
-//http server
-var http = require('http');
-protocol = 'http';
-var host = process.env.VCAP_APP_HOST || 'localhost';
-var port = process.env.VCAP_APP_PORT || 3000;
-
-var http = require('http');
-http.createServer(function (req, res) {
-  res.writeHead(200, {'Content-Type': 'text/html'});
-  var html = '<html>'
-  	+ '<head><title>LogSearch Flowdock Bot</title></head>'
-  	+ '<body>'
-  	+ '	<header>'
-  	+ '		<h1><a href="http://github.com/cityindex/logsearch-flowdock-bot/">'
-  	+ '			LogSearch Flowdock Bot'
-  	+ '		</a></h1>'
-  	+ '	</header>'
-  	+ '</body>'
-  	+ '</html>';
-  res.end( html );
-}).listen(port, '0.0.0.0');
-console.log('Server running at http://0.0.0.0:' + port.toString() + '/');
