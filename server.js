@@ -31,6 +31,7 @@ var flow = {
 };
 
 //includes
+var exec = require('child_process').exec;
 var winston = require('winston');
 var fs = require('fs');
 var http = require('http');
@@ -76,6 +77,12 @@ var FlowDock = {
 	 * @type {integer}
 	 */
 	logCount : 0,
+
+	/**
+	 * Maximum size of log file in line numbers
+	 * @type {Number}
+	 */
+	logMaxSize : 5000,
 
 	/**
 	 * Make a get request to flowdock api
@@ -135,6 +142,7 @@ var FlowDock = {
 	parseResponse :  function (flowName, chunk) {
 		count++;
 		console.log( count + ' events sent since start');
+		FlowDock.logLineCount();
 
 		var j = JSON.parse(chunk);
 		var res = [];
@@ -171,7 +179,23 @@ var FlowDock = {
 					if(err) throw err;
 				});
 		}
-	}//end log()
+	},//end log()
+
+	/**
+	 * Checks logfile for max size
+	 * Max size is defined in line number
+	 * @see  FlowDock.logMaxSize
+	 * @return {void}
+	 */
+	logLineCount: function(){
+		exec('wc '+filename+' | awk {\'print $1\'}', function (error, results) {
+		    if( parseInt(results.trim()) > FlowDock.logMaxSize ){
+		    	exec('mv '+filename+' '+filename+'.bak');
+		    	exec('rm -rf '+filename);
+		    	console.log('Backed up '+filename+' to '+filename+'.bak');
+		    }
+		});
+	}
 
 };//end FlowDock Object
 
