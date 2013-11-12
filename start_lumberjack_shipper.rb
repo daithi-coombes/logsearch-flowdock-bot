@@ -59,7 +59,7 @@ puts "----> Generating lumberjack config"
 lumberjack_config = <<-eos
 {
   "network": {
-    "servers": [ "redis.logsearch.cityindextest5.co.uk" ],
+    "servers": [ "redis.logsearch.cityindextest5.co.uk:5043" ],
     "ssl ca": "./lumberjack.crt",
     "timeout": 15
   },
