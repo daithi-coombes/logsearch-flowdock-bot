@@ -45,6 +45,9 @@ def sh(cmd)
 	end
 end
 
+puts "----> Starting Logger"
+sh "node server.js"
+
 puts "----> Downloading lumberjack from #{lumberjack_url}"
 sh "curl #{lumberjack_url} | tar -C #{Dir.tmpdir} -zx"
 sh "chmod +x #{Dir.tmpdir}/lumberjack"
@@ -68,7 +71,7 @@ lumberjack_config = <<-eos
       "paths": [ 
         "./flowdock.log"
       ],
-      "fields": { "service": "logsearch-flowdock-bot" }
+      "fields": { "type": "flowdock-bot" }
     }
   ]
 }

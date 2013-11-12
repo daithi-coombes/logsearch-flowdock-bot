@@ -168,13 +168,15 @@ var FlowDock = {
 	 */
 	log : function( data, winston ){
 
+		var data = JSON.stringify(data).trim()+'\n';
+
 		if( winston )
 			logger.info( JSON.stringify( data ) );
 
 		else{
 			fs.appendFile(
-				filename, 
-				JSON.stringify(data)+'\n',
+				filename,
+				data,
 				function(err){
 					if(err) throw err;
 				});
