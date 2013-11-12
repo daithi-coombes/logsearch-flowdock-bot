@@ -20,11 +20,14 @@
  * @author Daithi Coombes <webeire@gmail.com>
  */
 
-//get environment variables
+//load environment variables to this space
+var organization = process.env.FLOW_ORG;
+var flowName = process.env.FLOW_NAME;
+var token = process.env.FLOW_TOKEN;
 var flow = {
-	organization : process.env.FLOW_ORG,
-	flow: process.env.FLOW_NAME,
-	token: process.env.FLOW_TOKEN
+	organization : organization,
+	flow: flowName,
+	token: token
 };
 
 //includes
@@ -104,9 +107,6 @@ var FlowDock = {
 	 */
 	getFlows : function(){
 
-		console.log('Requesting flows');
-		console.log(flow);
-
 		https.get(
 			endpoint + '/flows',
 			function( resp ){
@@ -133,7 +133,6 @@ var FlowDock = {
 	 * @return {void}
 	 */
 	parseResponse :  function (flowName, chunk) {
-		console.log('Parsing response...');
 		count++;
 		console.log( count + ' events sent since start');
 
@@ -165,8 +164,12 @@ var FlowDock = {
 			logger.info( JSON.stringify( data ) );
 
 		else{
-			var log = fs.createWriteStream(filename, {'flags': 'a'});
-			log.write( JSON.stringify( data ) + '\n' );    
+			fs.appendFile(
+				filename, 
+				JSON.stringify(data)+'\n',
+				function(err){
+					if(err) throw err;
+				});
 		}
 	}//end log()
 
@@ -174,5 +177,28 @@ var FlowDock = {
 
 
 //main()
-FlowDock.getFlows();
-setInterval(function(){ FlowDock.getFlows(); }, 1000); //timer);
+//FlowDock.getFlows();
+//setInterval(function(){ FlowDock.getFlows(); }, 1000); //timer);
+
+//http server
+var http = require('http');
+protocol = 'http';
+var host = process.env.VCAP_APP_HOST || 'localhost';
+var port = process.env.VCAP_APP_PORT || 3000;
+
+var http = require('http');
+http.createServer(function (req, res) {
+  res.writeHead(200, {'Content-Type': 'text/html'});
+  var html = '<html>'
+  	+ '<head><title>LogSearch Flowdock Bot</title></head>'
+  	+ '<body>'
+  	+ '	<header>'
+  	+ '		<h1><a href="http://github.com/cityindex/logsearch-flowdock-bot/">'
+  	+ '			LogSearch Flowdock Bot'
+  	+ '		</a></h1>'
+  	+ '	</header>'
+  	+ '</body>'
+  	+ '</html>';
+  res.end( html );
+}).listen(port, '0.0.0.0');
+console.log('Server running at http://0.0.0.0:' + port.toString() + '/');

@@ -21,12 +21,13 @@ cd logsearch-flowdock-bot
 $npm install
 ```
 
-Create a file caled `flowdockConfig.js` and define your API key, organisation
-and flow like so:
-```js
-exports.token = 'xxxxxxxx';
-exports.flow = 'xxxxxxxx';
-exports.organisation = 'xxxxxxxx';
+Create a file caled `flowdockConfig.yml` and define your API key & organisation
+like so:
+```yaml
+---
+env:
+  FLOW_ORG: xxxxxxxx
+  FLOW_TOKEN: xxxxxxxx
 ```
 
 push to cloudfoundry

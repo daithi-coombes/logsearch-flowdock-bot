@@ -5,5 +5,9 @@
 	"repository" : {
 		"type" : "git",
 		"url" : "http://github.com/cityindex/logsearch-flowdock-bot"
+	},
+	"engines": {
+		"node": "0.10.x",
+		"npm":  "1.2.x"
 	}
 }
