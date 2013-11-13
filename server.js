@@ -21,9 +21,18 @@
  */
 
 //load environment variables to this space
-var organization = process.env.FLOW_ORG;
-var flowName = process.env.FLOW_NAME;
-var token = process.env.FLOW_TOKEN;
+if( process.argv[2]=='local' ){
+	console.log('Reading config from flowdockConfig.js');
+	var flowConfig = require('./flowdockConfig');
+	var organization = flowConfig.organization;
+	var flowName = flowConfig.flow;
+	var token = flowConfig.token;
+}else{
+	console.log('Reading environment variables...')
+	var organization = process.env.FLOW_ORG;
+	var flowName = process.env.FLOW_NAME;
+	var token = process.env.FLOW_TOKEN;
+}
 var flow = {
 	organization : organization,
 	flow: flowName,
@@ -91,8 +100,6 @@ var FlowDock = {
 	 */
 	requestGet : function( flowName ){
 
-		console.log('Request sent');
-
 		https.get(
 			FlowDock.url,
 			function( resp ){
@@ -141,7 +148,6 @@ var FlowDock = {
 	 */
 	parseResponse :  function (flowName, chunk) {
 		count++;
-		console.log( count + ' events sent since start');
 		FlowDock.logLineCount();
 
 		var j = JSON.parse(chunk);
