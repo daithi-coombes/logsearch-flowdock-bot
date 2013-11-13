@@ -1,2 +1,2 @@
-worker: node server.js
-worker: ruby start_lumberjack_shipper.rb
+bot: node server.js
+lumberjack: ruby start_lumberjack_shipper.rb

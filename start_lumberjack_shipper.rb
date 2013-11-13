@@ -78,4 +78,4 @@ puts "#{lumberjack_config_path}\n#{lumberjack_config}"
 
 puts "----> Starting lumberjack shipper..."
 sh "#{Dir.tmpdir}/lumberjack -config=#{lumberjack_config_path}"
-sh "reading from #{filename}"
+puts "reading from #{filename}"
