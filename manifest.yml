@@ -1,6 +1,5 @@
 ---
 applications:
 - name: logsearch-flowdock-bot
-  command: ruby start_lumberjack_shipper.rb
   
 inherit: flowdockConfig.yml
