@@ -41,13 +41,13 @@ var flow = {
 
 //includes
 var exec = require('child_process').exec;
-var winston = require('winston');
+var winston = false;	//set to true to use the winston logger @see https://github.com/flatiron/winston#usage
 var fs = require('fs');
 var http = require('http');
 var https = require('https');
 
 //vars
-var filename = 'flowdock.log'; //nb if you change this, please change in `config.json` file as well.
+var filename = 'flowdock.log'; //nb if you change this, please change in lumberjack's `config.json` file as well.
 var target = '/flows/' + flow.organization + '/' + flow.flow + '/users';
 var timer = 1000 * 60 * 1;	//Request data every 1 minute
 var count = 0;
@@ -58,12 +58,15 @@ var endpoint = 'https://' + flow.token + '@api.flowdock.com';
  * Logging with winston
  * @see  https://github.com/flatiron/winston#usage
  */
-var logger = new (winston.Logger)({
-    transports: [
-      new (winston.transports.Console)({ level: 'error' }),
-      new (winston.transports.File)({ filename: filename })
-    ]
-  });
+if(winston){
+	var winston = require('winston');
+	var logger = new (winston.Logger)({
+	    transports: [
+	      new (winston.transports.Console)({ level: 'error' }),
+	      new (winston.transports.File)({ filename: filename })
+	    ]
+	  });
+}
 //end Logging with winston
 
 /**
@@ -94,6 +97,18 @@ var FlowDock = {
 	logMaxSize : 5000,
 
 	/**
+	 * Error handler
+	 * @param  {object} e    The error object
+	 * @param  {string} data An error message
+	 */
+	error : function(e, data){
+		console.log('**** error ****');
+		console.log(e);
+		console.log(body);
+		console.log('**** ****');
+	},
+
+	/**
 	 * Make a get request to flowdock api
 	 * @param  {string} flowName The parametarized flow name
 	 * @return {void}          
@@ -103,13 +118,17 @@ var FlowDock = {
 		https.get(
 			FlowDock.url,
 			function( resp ){
+				var body = '';
 				resp.setEncoding('utf8');
-				resp.on( 'data', function(res){
-					FlowDock.parseResponse(flowName, res);
+				resp.on( 'data', function(chunk){
+					body += chunk;
+				});
+				resp.on( 'end', function(){
+					FlowDock.parseResponse(flowName, body);
 				});
 			}
 		).on('error',function(res){
-			console.log('Got error ' + res.message );
+			FlowDock.error(res, res.message);
 		});
 
 	},//end requestGet()
@@ -121,13 +140,28 @@ var FlowDock = {
 	 */
 	getFlows : function(){
 
+		//request flows
 		https.get(
 			endpoint + '/flows',
 			function( resp ){
+				var body = '';
 				resp.setEncoding('utf8');
-				resp.on( 'data', function(res){
-					FlowDock.flows, j = JSON.parse(res);
 
+				//build response
+				resp.on( 'data', function(chunk){
+					body += chunk;
+				});
+
+				//parse response
+				resp.on( 'end', function(){
+					try{
+						var j = JSON.parse(body);
+					} catch (e) {
+						FlowDock.error(e, body);
+						return;
+					}
+
+					//get user data for current flow
 					for(var x=0; x<j.length; x++){
 						var flowName = j[x].parameterized_name;
 						target = '/flows/' + flow.organization + '/' + flowName + '/users';
@@ -137,31 +171,40 @@ var FlowDock = {
 					}
 				});
 			}
-		);
+		).on('error',function(res){
+			FlowDock.error(res, res.message);
+		});
 	},//end getFlows()
 
 	/**
 	 * Parses a request to FlowDock api.
 	 * Callback function for https.get
-	 * @param  {http.ServerResponse} resp The server response
+	 * @param {string} flowName The name of the current flow
+	 * @param  {http.ServerResponse} chunk The server response
 	 * @return {void}
 	 */
 	parseResponse :  function (flowName, chunk) {
 		count++;
 		FlowDock.logLineCount();
+		console.log(count+' events');
 
-		var j = JSON.parse(chunk);
-		var res = [];
+		//parse chunk
+		try{
+			var j = JSON.parse(chunk);
+		} catch (e) {
+			FlowDock.error(e, chunk);
+			return;
+		}
+
+		//log each event
 		for(var x=0; x<j.length; x++){
-			res = {
+			FlowDock.log({
 				id : j[x].id,
 				flow : flowName,
 				organization : flow.organization,
 				nick : j[x].nick,
 				last_activity : new Date(j[x].last_activity)
-			};
-			winston = false;
-			FlowDock.log( res, winston );
+			});
 		}
 	},//end parseResponse()
 
@@ -172,7 +215,7 @@ var FlowDock = {
 	 * used. Default false, use `fs` module will be used
 	 * @return {void}
 	 */
-	log : function( data, winston ){
+	log : function( data ){
 
 		var data = JSON.stringify(data).trim()+'\n';
 
@@ -199,7 +242,6 @@ var FlowDock = {
 		exec('wc '+filename+' | awk {\'print $1\'}', function (error, results) {
 		    if( parseInt(results.trim()) > FlowDock.logMaxSize ){
 		    	exec('mv '+filename+' '+filename+'.bak');
-		    	exec('rm -rf '+filename);
 		    	console.log('Backed up '+filename+' to '+filename+'.bak');
 		    }
 		});
@@ -210,4 +252,4 @@ var FlowDock = {
 
 //main()
 FlowDock.getFlows();
-setInterval(function(){ FlowDock.getFlows(); }, 1000); //timer);
+setInterval(function(){ FlowDock.getFlows(); }, timer);

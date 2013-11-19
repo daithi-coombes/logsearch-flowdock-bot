@@ -6,22 +6,18 @@ Monitor Flowdock and pull in flow related info which gets shipped in to LogSearc
 Events are stored in log file `flowdock.log` which can then be read as an input
 to LogSearch. Flowdock api is called once every 5 minutes
 
+
 install
 =======
-Clone this repo into your [Logsearch](https://github.com/cityindex/) 
+Clone this repo into your [Logsearch](https://github.com/cityindex/logsearch) 
 installation:
 ```
 cd logsearch/example
 git clone https://github.com/cityindex/logsearch-flowdock-bot
 ```
 
-Install nodejs dependencies
-```
-cd logsearch-flowdock-bot
-$npm install
-```
-
-Create a file caled `flowdockConfig.yml` and define your API key & organisation
+####Cloud Foundry Setup
+Create a file called `flowdockConfig.yml` and define your API key & organisation
 like so:
 ```yaml
 ---
@@ -29,28 +25,25 @@ env:
   FLOW_ORG: xxxxxxxx
   FLOW_TOKEN: xxxxxxxx
 ```
-
-push to cloudfoundry
-====================
-Once you have cloned this repo, cd into the directory and set the above config
-vars as environment variables:
-```bash
-cf set-env logsearch-flowdock-bot FLOW $flowName
-cf set-env logsearch-flowdock-bot ORGANIZATION $orgName
-cf set-env logsearch-flowdock-bot TOKEN $token
+Then push to Cloud Foundry
 ```
-Replace `$flowName`,`$orgName`,`$token` with their respective values
+cf push
+```
+
+####Local Setup
+Create a file called `flowdockConfig.js` and define your API key & organisation
+like so:
+```js
+exports.organization = 'xxxxxxx';
+exports.token = 'xxxxxxx';
+```
 
 
-run bot locally
-=======
-`node server.js`
+Run the bot locally
+===================
+To run the bot locally from the command line, first install [lumberjack](https://github.com/jordansissel/lumberjack) then run:
+`node server.js local && /opt/lumberjack/bin/lumberjack.sh -config config.json`
 
-run lumberjack locally
-==============
-Make sure the [logsearch vm is running](https://github.com/cityindex/logsearch/wiki/Quick-Start-Guide)
-Then from within the `logsearch-flowdock-bot` repo, run:
-`/opt/lumberjack/bin/lumberjack.sh -config config.json`
 
 installing kibana dashboard
 ===========================
