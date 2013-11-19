@@ -170,8 +170,6 @@ var FlowDock = {
 			return;
 		}
 
-		if(error_msg)
-			console.log(error_msg);
 		console.log(count+' events');
 
 		var res = [];
