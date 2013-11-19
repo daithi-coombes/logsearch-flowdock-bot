@@ -252,4 +252,4 @@ var FlowDock = {
 
 //main()
 FlowDock.getFlows();
-setInterval(function(){ FlowDock.getFlows(); }, 1000); //timer);
+setInterval(function(){ FlowDock.getFlows(); }, timer);
