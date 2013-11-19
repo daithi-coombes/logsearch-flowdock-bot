@@ -20,8 +20,27 @@
  * @author Daithi Coombes <webeire@gmail.com>
  */
 
+//load environment variables to this space
+if( process.argv[2]=='local' ){
+	console.log('Reading config from flowdockConfig.js');
+	var flowConfig = require('./flowdockConfig');
+	var organization = flowConfig.organization;
+	var flowName = flowConfig.flow;
+	var token = flowConfig.token;
+}else{
+	console.log('Reading environment variables...')
+	var organization = process.env.FLOW_ORG;
+	var flowName = process.env.FLOW_NAME;
+	var token = process.env.FLOW_TOKEN;
+}
+var flow = {
+	organization : organization,
+	flow: flowName,
+	token: token
+};
+
 //includes
-var flow = require('./flowdockConfig');
+var exec = require('child_process').exec;
 var winston = require('winston');
 var fs = require('fs');
 var http = require('http');
@@ -47,7 +66,6 @@ var logger = new (winston.Logger)({
   });
 //end Logging with winston
 
-
 /**
  * Flowdock Object 
  * @type {FlowDock}
@@ -70,13 +88,17 @@ var FlowDock = {
 	logCount : 0,
 
 	/**
+	 * Maximum size of log file in line numbers
+	 * @type {Number}
+	 */
+	logMaxSize : 5000,
+
+	/**
 	 * Make a get request to flowdock api
 	 * @param  {string} flowName The parametarized flow name
 	 * @return {void}          
 	 */
 	requestGet : function( flowName ){
-
-		console.log('Request sent');
 
 		https.get(
 			FlowDock.url,
@@ -98,8 +120,6 @@ var FlowDock = {
 	 * @return {void}
 	 */
 	getFlows : function(){
-
-		console.log('Requesting flows');
 
 		https.get(
 			endpoint + '/flows',
@@ -127,9 +147,8 @@ var FlowDock = {
 	 * @return {void}
 	 */
 	parseResponse :  function (flowName, chunk) {
-		console.log('Parsing response...');
 		count++;
-		console.log( count + ' events sent since start');
+		FlowDock.logLineCount();
 
 		var j = JSON.parse(chunk);
 		var res = [];
@@ -155,14 +174,36 @@ var FlowDock = {
 	 */
 	log : function( data, winston ){
 
+		var data = JSON.stringify(data).trim()+'\n';
+
 		if( winston )
 			logger.info( JSON.stringify( data ) );
 
 		else{
-			var log = fs.createWriteStream(filename, {'flags': 'a'});
-			log.write( JSON.stringify( data ) + '\n' );    
+			fs.appendFile(
+				filename,
+				data,
+				function(err){
+					if(err) throw err;
+				});
 		}
-	}//end log()
+	},//end log()
+
+	/**
+	 * Checks logfile for max size
+	 * Max size is defined in line number
+	 * @see  FlowDock.logMaxSize
+	 * @return {void}
+	 */
+	logLineCount: function(){
+		exec('wc '+filename+' | awk {\'print $1\'}', function (error, results) {
+		    if( parseInt(results.trim()) > FlowDock.logMaxSize ){
+		    	exec('mv '+filename+' '+filename+'.bak');
+		    	exec('rm -rf '+filename);
+		    	console.log('Backed up '+filename+' to '+filename+'.bak');
+		    }
+		});
+	}
 
 };//end FlowDock Object
 
