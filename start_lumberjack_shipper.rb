@@ -40,9 +40,6 @@ def sh(cmd)
   end
 end
 
-puts "----> Starting logger"
-sh "node server.js"
-
 puts "----> Downloading lumberjack from #{lumberjack_url}"
 sh "curl #{lumberjack_url} | tar -C #{Dir.tmpdir} -zx"
 sh "chmod +x #{Dir.tmpdir}/lumberjack"
