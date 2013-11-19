@@ -51,6 +51,8 @@ var filename = 'flowdock.log'; //nb if you change this, please change in `config
 var target = '/flows/' + flow.organization + '/' + flow.flow + '/users';
 var timer = 1000 * 60 * 1;	//Request data every 1 minute
 var count = 0;
+var count_error = 0;
+var error_msg = '';
 var endpoint = 'https://' + flow.token + '@api.flowdock.com';
 
 
@@ -126,7 +128,15 @@ var FlowDock = {
 			function( resp ){
 				resp.setEncoding('utf8');
 				resp.on( 'data', function(res){
-					FlowDock.flows, j = JSON.parse(res);
+					try{
+						var j = JSON.parse(res);
+					} catch (e) {
+						count_error++;
+						error_msg = e;
+						console.log(e);
+						console.log(res);
+						return;
+					}
 
 					for(var x=0; x<j.length; x++){
 						var flowName = j[x].parameterized_name;
@@ -153,9 +163,16 @@ var FlowDock = {
 		try{
 			var j = JSON.parse(chunk);
 		} catch (e) {
+			count_error++;
+			error_msg = e;
 			console.log(e);
 			console.log(chunk);
+			return;
 		}
+
+		if(error_msg)
+			console.log(error_msg);
+		console.log(count+' events');
 
 		var res = [];
 		for(var x=0; x<j.length; x++){
