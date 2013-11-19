@@ -150,7 +150,13 @@ var FlowDock = {
 		count++;
 		FlowDock.logLineCount();
 
-		var j = JSON.parse(chunk);
+		try{
+			var j = JSON.parse(chunk);
+		} catch (e) {
+			console.log(e);
+			console.log(chunk);
+		}
+
 		var res = [];
 		for(var x=0; x<j.length; x++){
 			res = {
