@@ -95,6 +95,13 @@ var FlowDock = {
 	 */
 	logMaxSize : 5000,
 
+	error : function(e, data){
+		console.log('**** error ****');
+		console.log(e);
+		console.log(body);
+		console.log('**** ****');
+	},
+
 	/**
 	 * Make a get request to flowdock api
 	 * @param  {string} flowName The parametarized flow name
@@ -105,13 +112,17 @@ var FlowDock = {
 		https.get(
 			FlowDock.url,
 			function( resp ){
+				var body = '';
 				resp.setEncoding('utf8');
-				resp.on( 'data', function(res){
-					FlowDock.parseResponse(flowName, res);
+				resp.on( 'data', function(chunk){
+					body += chunk;
+				});
+				resp.on( 'end', function(){
+					FlowDock.parseResponse(flowName, body);
 				});
 			}
 		).on('error',function(res){
-			console.log('Got error ' + res.message );
+			FlowDock.error(res, res.message);
 		});
 
 	},//end requestGet()
@@ -126,15 +137,18 @@ var FlowDock = {
 		https.get(
 			endpoint + '/flows',
 			function( resp ){
+				var body = '';
 				resp.setEncoding('utf8');
-				resp.on( 'data', function(res){
+
+				resp.on( 'data', function(chunk){
+					body += chunk;
+				});
+
+				resp.on( 'end', function(){
 					try{
-						var j = JSON.parse(res);
+						var j = JSON.parse(body);
 					} catch (e) {
-						count_error++;
-						error_msg = e;
-						console.log(e);
-						console.log(res);
+						FlowDock.error(e, body);
 						return;
 					}
 
@@ -163,10 +177,7 @@ var FlowDock = {
 		try{
 			var j = JSON.parse(chunk);
 		} catch (e) {
-			count_error++;
-			error_msg = e;
-			console.log(e);
-			console.log(chunk);
+			FlowDock.error(e, chunk);
 			return;
 		}
 
