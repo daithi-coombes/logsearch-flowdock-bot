@@ -104,7 +104,7 @@ var FlowDock = {
 	error : function(e, data){
 		console.log('**** error ****');
 		console.log(e);
-		console.log(body);
+		console.log(data);
 		console.log('**** ****');
 	},
 

@@ -1,5 +1,5 @@
 {
-  "title": "Kibana Flowdock",
+  "title": "LogSearch Flowdock",
   "services": {
     "query": {
       "idQueue": [
@@ -24,12 +24,24 @@
     },
     "filter": {
       "idQueue": [
-        0,
         1,
         2
       ],
-      "list": {},
-      "ids": []
+      "list": {
+        "0": {
+          "type": "time",
+          "field": "@timestamp",
+          "from": "now-1m",
+          "to": "now",
+          "mandate": "must",
+          "active": true,
+          "alias": "",
+          "id": 0
+        }
+      },
+      "ids": [
+        0
+      ]
     }
   },
   "rows": [
@@ -52,7 +64,7 @@
           "value_field": null,
           "auto_int": true,
           "resolution": 100,
-          "interval": "1y",
+          "interval": "10m",
           "fill": 1,
           "linewidth": 1,
           "timezone": "utc",
@@ -248,7 +260,7 @@
   "editable": true,
   "failover": false,
   "index": {
-    "interval": "none",
+    "interval": "day",
     "pattern": "[logstash-]YYYY.MM.DD",
     "default": "_all"
   },
@@ -257,7 +269,7 @@
   "pulldowns": [
     {
       "type": "query",
-      "collapse": true,
+      "collapse": false,
       "notice": false,
       "enable": true,
       "query": "*",
@@ -268,7 +280,7 @@
     {
       "type": "filtering",
       "collapse": true,
-      "notice": false,
+      "notice": true,
       "enable": true
     }
   ],
@@ -303,7 +315,8 @@
         "1d"
       ],
       "timefield": "@timestamp",
-      "now": false
+      "now": true,
+      "filter_id": 0
     }
   ],
   "loader": {
