@@ -1,5 +1,5 @@
 {
-  "title": "LogSearch Flowdock",
+  "title": "LogSearch Flowdock Bot",
   "services": {
     "query": {
       "idQueue": [
@@ -24,68 +24,60 @@
     },
     "filter": {
       "idQueue": [
-        1,
         2
       ],
       "list": {
         "0": {
-          "type": "time",
-          "field": "@timestamp",
-          "from": "now-1m",
-          "to": "now",
+          "type": "field",
+          "field": "@fields.type",
+          "query": "\"flowdock-bot\"",
           "mandate": "must",
           "active": true,
           "alias": "",
           "id": 0
+        },
+        "1": {
+          "type": "time",
+          "field": "@timestamp",
+          "from": "now-30d",
+          "to": "now",
+          "mandate": "must",
+          "active": true,
+          "alias": "",
+          "id": 1
         }
       },
       "ids": [
-        0
+        0,
+        1
       ]
     }
   },
   "rows": [
     {
-      "title": "Events over time",
+      "title": "Options",
       "height": "150px",
       "editable": true,
       "collapse": false,
       "collapsable": true,
       "panels": [
         {
-          "span": 12,
+          "span": 9,
           "editable": true,
-          "group": [
-            "default"
-          ],
           "type": "histogram",
+          "loadingEditor": false,
           "mode": "count",
           "time_field": "@timestamp",
-          "value_field": null,
-          "auto_int": true,
-          "resolution": 100,
-          "interval": "10m",
-          "fill": 1,
-          "linewidth": 1,
-          "timezone": "utc",
-          "spyable": true,
-          "zoomlinks": true,
-          "bars": false,
-          "stack": true,
-          "points": false,
-          "lines": true,
-          "legend": true,
-          "x-axis": true,
-          "y-axis": true,
-          "percentage": false,
-          "interactive": true,
           "queries": {
             "mode": "all",
             "ids": [
               0
             ]
           },
-          "title": "Events over time",
+          "value_field": null,
+          "auto_int": true,
+          "resolution": 100,
+          "interval": "12h",
           "intervals": [
             "auto",
             "1s",
@@ -101,73 +93,26 @@
             "1M",
             "1y"
           ],
+          "fill": 1,
+          "linewidth": 1,
+          "timezone": "utc",
+          "spyable": true,
+          "zoomlinks": true,
+          "bars": false,
+          "stack": true,
+          "points": false,
+          "lines": true,
+          "legend": true,
+          "x-axis": true,
+          "y-axis": true,
+          "percentage": false,
+          "interactive": true,
           "options": true,
           "tooltip": {
             "value_type": "individual",
             "query_as_alias": false
-          }
-        }
-      ],
-      "notice": false
-    },
-    {
-      "title": "Charts",
-      "height": "150px",
-      "editable": true,
-      "collapse": false,
-      "collapsable": true,
-      "panels": [
-        {
-          "error": false,
-          "span": 4,
-          "editable": true,
-          "type": "pie",
-          "loadingEditor": false,
-          "query": {
-            "field": "@fields.data.organization"
           },
-          "queries": {
-            "mode": "all",
-            "ids": [
-              0
-            ]
-          },
-          "size": 10,
-          "exclude": [],
-          "donut": false,
-          "tilt": false,
-          "legend": "below",
-          "labels": true,
-          "mode": "terms",
-          "default_field": "DEFAULT",
-          "spyable": true
-        },
-        {
-          "error": false,
-          "span": 4,
-          "editable": true,
-          "type": "pie",
-          "loadingEditor": false,
-          "index": "test",
-          "search_type": "count",
-          "query": {
-            "field": "@fields.data.flow"
-          },
-          "size": 10,
-          "exclude": [],
-          "donut": false,
-          "tilt": false,
-          "legend": "below",
-          "labels": false,
-          "mode": "terms",
-          "default_field": "DEFAULT",
-          "spyable": true,
-          "queries": {
-            "mode": "all",
-            "ids": [
-              0
-            ]
-          }
+          "title": "Events Over Time"
         },
         {
           "error": false,
@@ -185,8 +130,8 @@
           },
           "field": "_type",
           "exclude": [],
-          "missing": true,
-          "other": true,
+          "missing": false,
+          "other": false,
           "size": 10,
           "order": "count",
           "style": {
@@ -205,8 +150,17 @@
       "notice": false
     },
     {
-      "title": "Data",
-      "height": "150px",
+      "title": "Graph",
+      "height": "250px",
+      "editable": true,
+      "collapse": true,
+      "collapsable": true,
+      "panels": [],
+      "notice": false
+    },
+    {
+      "title": "Events",
+      "height": "650px",
       "editable": true,
       "collapse": false,
       "collapsable": true,
@@ -215,15 +169,10 @@
           "error": false,
           "span": 12,
           "editable": true,
+          "group": [
+            "default"
+          ],
           "type": "table",
-          "loadingEditor": false,
-          "status": "Stable",
-          "queries": {
-            "mode": "all",
-            "ids": [
-              0
-            ]
-          },
           "size": 100,
           "pages": 5,
           "offset": 0,
@@ -231,7 +180,6 @@
             "@timestamp",
             "desc"
           ],
-          "group": "default",
           "style": {
             "font-size": "9pt"
           },
@@ -242,45 +190,68 @@
             "@fields.data.last_activity",
             "@timestamp"
           ],
-          "highlight": [],
+          "highlight": [
+            "@timestamp"
+          ],
           "sortable": true,
           "header": true,
           "paging": true,
+          "spyable": true,
+          "queries": {
+            "mode": "all",
+            "ids": [
+              0
+            ]
+          },
           "field_list": true,
-          "all_fields": false,
+          "status": "Stable",
           "trimFactor": 300,
           "normTimes": true,
-          "spyable": true,
-          "title": "Data"
+          "title": "Documents",
+          "all_fields": false
         }
       ],
       "notice": false
     }
   ],
   "editable": true,
-  "failover": false,
   "index": {
-    "interval": "day",
+    "interval": "none",
     "pattern": "[logstash-]YYYY.MM.DD",
     "default": "_all"
   },
   "style": "dark",
+  "failover": false,
   "panel_hints": true,
+  "loader": {
+    "save_gist": false,
+    "save_elasticsearch": true,
+    "save_local": true,
+    "save_default": true,
+    "save_temp": true,
+    "save_temp_ttl_enable": true,
+    "save_temp_ttl": "30d",
+    "load_gist": true,
+    "load_elasticsearch": true,
+    "load_elasticsearch_size": 20,
+    "load_local": true,
+    "hide": false
+  },
   "pulldowns": [
     {
       "type": "query",
       "collapse": false,
       "notice": false,
-      "enable": true,
       "query": "*",
       "pinned": true,
       "history": [],
-      "remember": 10
+      "remember": 10,
+      "enable": true
     },
     {
       "type": "filtering",
       "collapse": true,
-      "notice": true,
+      "notice": false,
       "enable": true
     }
   ],
@@ -289,7 +260,6 @@
       "type": "timepicker",
       "collapse": false,
       "notice": false,
-      "enable": true,
       "status": "Stable",
       "time_options": [
         "5m",
@@ -315,23 +285,10 @@
         "1d"
       ],
       "timefield": "@timestamp",
+      "enable": true,
       "now": true,
-      "filter_id": 0
+      "filter_id": 1
     }
   ],
-  "loader": {
-    "save_gist": false,
-    "save_elasticsearch": true,
-    "save_local": true,
-    "save_default": true,
-    "save_temp": true,
-    "save_temp_ttl_enable": true,
-    "save_temp_ttl": "30d",
-    "load_gist": false,
-    "load_elasticsearch": true,
-    "load_elasticsearch_size": 20,
-    "load_local": false,
-    "hide": false
-  },
   "refresh": false
 }
