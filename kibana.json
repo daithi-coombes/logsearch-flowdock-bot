@@ -55,7 +55,7 @@
   },
   "rows": [
     {
-      "title": "Options",
+      "title": "Metrics",
       "height": "150px",
       "editable": true,
       "collapse": false,
@@ -147,15 +147,6 @@
           "title": "Document Types"
         }
       ],
-      "notice": false
-    },
-    {
-      "title": "Graph",
-      "height": "250px",
-      "editable": true,
-      "collapse": true,
-      "collapsable": true,
-      "panels": [],
       "notice": false
     },
     {
