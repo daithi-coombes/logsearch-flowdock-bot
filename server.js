@@ -49,7 +49,7 @@ var https = require('https');
 //vars
 var filename = 'flowdock.log'; //nb if you change this, please change in lumberjack's `config.json` file as well.
 var target = '/flows/' + flow.organization + '/' + flow.flow + '/users';
-var timer = 1000 * 60 * 1;	//Request data every 1 minute
+var timer = 1000; // * 60 * 1;	//Request data every 1 minute
 var count = 0;
 var endpoint = 'https://' + flow.token + '@api.flowdock.com';
 
