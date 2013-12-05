@@ -57,13 +57,14 @@ lumberjack_config = <<-eos
 {
   "network": {
     "servers": [ "#{network_servers}" ],
-    "ssl ca": "#{ssl_ca_path}",
+    "ssl certificate" : "/app/lumberjack.crt",
+    "ssl ca": "/app/lumberjack.crt",
     "timeout": 15
   },
   "files": [
     {
       "paths": [ 
-        "#{filename}"
+        "/app/flowdock.log"
       ],
       "fields": { "type": "flowdock_bot" }
     }
@@ -74,5 +75,6 @@ lumberjack_config_path = write_to_tmp_file(lumberjack_config)
 puts "#{lumberjack_config_path}\n#{lumberjack_config}"
 
 puts "----> Starting lumberjack shipper..."
-sh "#{Dir.tmpdir}/lumberjack -config=#{lumberjack_config_path}"
-puts "reading from #{filename}"
+#sh "#{Dir.tmpdir}/lumberjack --config #{lumberjack_config_path}"
+exec("#{Dir.tmpdir}/lumberjack --config #{lumberjack_config_path}")
+puts "reading from /app/flowdock.log"
