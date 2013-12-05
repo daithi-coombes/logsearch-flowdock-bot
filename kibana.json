@@ -30,7 +30,7 @@
         "0": {
           "type": "field",
           "field": "@fields.type",
-          "query": "\"flowdock-bot\"",
+          "query": "\"flowdock_bot\"",
           "mandate": "must",
           "active": true,
           "alias": "",
