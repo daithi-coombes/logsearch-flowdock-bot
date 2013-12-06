@@ -29,7 +29,7 @@
       "list": {
         "0": {
           "type": "field",
-          "field": "@fields.type",
+          "field": "@type",
           "query": "\"flowdock_bot\"",
           "mandate": "must",
           "active": true,
@@ -39,7 +39,7 @@
         "1": {
           "type": "time",
           "field": "@timestamp",
-          "from": "now-30d",
+          "from": "now-24h",
           "to": "now",
           "mandate": "must",
           "active": true,
@@ -77,7 +77,7 @@
           "value_field": null,
           "auto_int": true,
           "resolution": 100,
-          "interval": "12h",
+          "interval": "10m",
           "intervals": [
             "auto",
             "1s",
@@ -115,7 +115,6 @@
           "title": "Events Over Time"
         },
         {
-          "error": false,
           "span": 3,
           "editable": true,
           "group": [
@@ -157,7 +156,6 @@
       "collapsable": true,
       "panels": [
         {
-          "error": false,
           "span": 12,
           "editable": true,
           "group": [
@@ -168,7 +166,7 @@
           "pages": 5,
           "offset": 0,
           "sort": [
-            "@timestamp",
+            "flow",
             "desc"
           ],
           "style": {
@@ -176,9 +174,9 @@
           },
           "overflow": "min-height",
           "fields": [
-            "@fields.data.flow",
-            "@fields.data.nick",
-            "@fields.data.last_activity",
+            "flow",
+            "nick",
+            "last_activity",
             "@timestamp"
           ],
           "highlight": [
@@ -199,7 +197,8 @@
           "trimFactor": 300,
           "normTimes": true,
           "title": "Documents",
-          "all_fields": false
+          "all_fields": false,
+          "error": false
         }
       ],
       "notice": false
@@ -207,7 +206,7 @@
   ],
   "editable": true,
   "index": {
-    "interval": "none",
+    "interval": "day",
     "pattern": "[logstash-]YYYY.MM.DD",
     "default": "_all"
   },
@@ -241,8 +240,8 @@
     },
     {
       "type": "filtering",
-      "collapse": true,
-      "notice": false,
+      "collapse": false,
+      "notice": true,
       "enable": true
     }
   ],
