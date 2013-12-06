@@ -2,6 +2,7 @@
   "network": {
     "servers": [ "localhost:5043" ],
     "ssl key" : "./lumberjack.key",
+    "ssl certificate" : "./lumberjack.crt",
     "ssl ca" : "./lumberjack.crt"
   },
 
@@ -11,7 +12,7 @@
         "./flowdock.log"
       ],
 
-      "fields": { "type" : "flowdock-bot", "data" : "" }
+      "fields": { "type" : "flowdock_bot" }
     }
   ]
 }
