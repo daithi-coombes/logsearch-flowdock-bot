@@ -54,7 +54,7 @@ var count = 0;
 var endpoint = 'https://' + flow.token + '@api.flowdock.com';
 
 
-var flowDock = require('./server.js');
+var flowDock = require('flowdock-bot');
 
 flowDock.config = flow;
 flowDock.url = endpoint;
