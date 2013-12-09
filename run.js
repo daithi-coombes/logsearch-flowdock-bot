@@ -23,7 +23,7 @@
 //load environment variables to this space
 if( process.argv[2]=='local' ){
 	console.log('Reading config from flowdockConfig.js');
-	var flowConfig = require('./flowdockConfig');
+	var flowConfig = require('config/flowdockConfig.js');
 	var organization = flowConfig.organization;
 	var flowName = flowConfig.flow;
 	var token = flowConfig.token;
@@ -47,7 +47,7 @@ var http = require('http');
 var https = require('https');
 
 //vars
-var filename = 'flowdock.log'; //nb if you change this, please change in lumberjack's `config.json` file as well.
+var filename = 'logs/flowdock.log'; //nb if you change this, please change in lumberjack's `config.json` file as well.
 var target = '/flows/' + flow.organization + '/' + flow.flow + '/users';
 var timer = 1000 * 60 * 1;	//Request data every 1 minute
 var count = 0;
