@@ -23,7 +23,7 @@
 //load environment variables to this space
 if( process.argv[2]=='local' ){
 	console.log('Reading config from flowdockConfig.js');
-	var flowConfig = require('config/flowdockConfig.js');
+	var flowConfig = require('./config/flowdockConfig');
 	var organization = flowConfig.organization;
 	var flowName = flowConfig.flow;
 	var token = flowConfig.token;
@@ -54,7 +54,7 @@ var count = 0;
 var endpoint = 'https://' + flow.token + '@api.flowdock.com';
 
 
-var flowDock = require('flowdock-bot');
+var flowDock = require('./lib/flowdock-bot');
 
 flowDock.config = flow;
 flowDock.url = endpoint;
