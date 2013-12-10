@@ -16,13 +16,14 @@ suite('flowdock-bot', function(){
 			{"id":12345,"flow":"my-flow-1","organization":"coolKats","nick":"coombesy","last_activity":"2013-05-08T16:07:23.180Z"},
 			{"id":67890,"flow":"the-other-flow","organization":"coolKids","nick":"daithi","last_activity":"1970-01-01T00:00:00.000Z"}
 		];
+		_flowdock.log( _logEvent );
 	});
 	teardown(function(){
 
 		try{ //delete test logfile
 			if(fs.lstatSync(_flowdock.filename))
-				exec('rm -f '+_flowdock.filename);
-		}catch(e){}
+				fs.unlinkSync(_flowdock.filename);
+		}catch(e){console.log(e)}
 
 		_flowdock = undefined;
 	});
@@ -43,7 +44,6 @@ suite('flowdock-bot', function(){
 	});
 
 	test('flowdock-bot.log()', function(){
-		_flowdock.log( _logEvent );
 
 		fs.readFile(_flowdock.filename, 'utf8', function(err, data){
 			if (err) {
@@ -55,35 +55,35 @@ suite('flowdock-bot', function(){
 		});
 	});
 
-	test('flowdock-bot.logLineCount()', function(){
+	test('Count log file length', function(done){
+
+		var expected = 1;
+
+		_flowdock.logLineCount(function(actual){
+			assert.equal(actual, expected);
+			done();
+		});
+	});
+
+	test('Log file backup', function(done){
 		_flowdock.log( _logEvent );
 
-		async.series(
-			function(callback){	//test line count
+		_flowdock.logMaxSize = 1;
+		var filename = _flowdock.filename;
 
-				_flowdock.logLineCount(function(res){
-					assert.equal(2, _logEvent.length);
-					callback(null, "one");
-					console.log('*** finished log count ***');
-				});
-			},
-			function(callback){	//re-populate logs
+		_flowdock.logLineCount(function(){
+			try {
+			    stats = fs.lstatSync(filename+'.bak');
 
-				_flowdock.logMaxSize = 1;
-				_flowdock.log.bind(callback);
-				_flowdock.log( _logEvent, function(){
-					callback(null, "two");
-					console.log("****");
-				} );
-			},
-			function(callback){
-				_flowdock.logLineCount(function(err, res){
-					console.log(err);
-					callback(null, "three");
-					console.log('*** finished backup ***');
-				});
+			    if (stats.isFile())
+			        done();
+			    else
+			    	throw new Error('Backup file not created');
 			}
-		);
-
+			catch (e) {
+				console.log(arguments);
+				throw new Error(e);
+			}
+		});
 	});
 });
