@@ -1,6 +1,7 @@
-flowdockConfig*
+config/flowdockConfig*
 flowdock.log
-node_modules
+node_modules/*
+!node_modules/flowdock-bot
 npm-debug.log
 .lumberjack
 *.crt
