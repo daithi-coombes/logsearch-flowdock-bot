@@ -53,9 +53,13 @@ var timer = 1000 * 60 * 1;	//Request data every 1 minute
 var count = 0;
 var endpoint = 'https://' + flow.token + '@api.flowdock.com';
 
+//create logs dir
+if(!fs.existsSync('./logs')){
+	fs.mkdirSync('./logs');
+}
 
+//setup flowdock module
 var flowDock = require('./lib/flowdock-bot');
-
 flowDock.config = flow;
 flowDock.url = endpoint;
 flowDock.filename = filename;
