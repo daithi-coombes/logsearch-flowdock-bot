@@ -62,5 +62,15 @@ flowDock.filename = filename;
 flowDock.winston = winston;
 
 //main()
-flowDock.getFlows();
-setInterval(function(){ flowDock.getFlows(); }, timer);
+function main(){
+	flowDock.getFlows(function(flows){
+
+		//get user data for current flow
+		for(var x=0; x<flows.length; x++){
+			var flowName = flows[x].parameterized_name;
+			flowDock.requestGet( flowName, '/users' );
+		}
+	});	
+}
+main();
+setInterval(function(){main();}, timer);

@@ -12,6 +12,7 @@ suite('flowdock-bot', function(){
 		_flowdock.config = require('../../config/flowdockConfig');
 		_flowdock.filename = process.cwd() + '/tests/flowdockTest.log';
 		_flowdock.logMaxSize = 1000;
+		_flowdock.url = 'https://' + _flowdock.config.token + '@api.flowdock.com';
 		_logEvent = [
 			{"id":12345,"flow":"my-flow-1","organization":"coolKats","nick":"coombesy","last_activity":"2013-05-08T16:07:23.180Z"},
 			{"id":67890,"flow":"the-other-flow","organization":"coolKids","nick":"daithi","last_activity":"1970-01-01T00:00:00.000Z"}
@@ -35,8 +36,19 @@ suite('flowdock-bot', function(){
 
 	});
 
-	test('flowdock-bot.getFlows()', function(){
+	test('flowdock-bot.getFlows()', function(done){
 
+		var expected = _flowdock.config.organization;
+		_flowdock.getFlows(function(flows){
+			var ok=true;
+			for(var x=0; x<flows.length; x++){
+				if(flows[x].organization.parameterized_name!=expected)
+					ok=false;
+			}
+
+			if(ok)
+				done();
+		});
 	});
 
 	test('flowdock-bot.parseResponse()', function(done){
