@@ -9,5 +9,11 @@
 	"engines": {
 		"node": "0.10.x",
 		"npm":  "1.2.x"
+	},
+	"scripts": {
+		"test": "mocha --recursive --ui tdd tests"
+	},
+	"dependencies": {
+		"async": "*"
 	}
 }
