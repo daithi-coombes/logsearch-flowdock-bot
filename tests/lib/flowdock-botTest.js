@@ -39,9 +39,33 @@ suite('flowdock-bot', function(){
 
 	});
 
-	test('flowdock-bot.parseResponse()', function(){
+	test('flowdock-bot.parseResponse()', function(done){
+	
+		fs.unlinkSync( _flowdock.filename );
 
-	});
+		var expected = [{
+					id : 1,
+					flow: 'test',
+					organization: _flowdock.config.organization,
+					nick: 'coombesy',
+					last_activity: '2013-05-08T16:07:23.180Z'
+				}];
+		_flowdock.parseResponse('test', JSON.stringify(expected), function(){});
+
+		fs.readFile(_flowdock.filename, 'utf8', function(err, data){
+			if (err) {
+				console.log('Error: ' + err);
+				return;
+			}
+			
+			actual = JSON.parse(data.trim());
+			assert.deepEqual(
+				actual,
+				expected[0]
+			);
+			done();
+		});
+});
 
 	test('flowdock-bot.log()', function(){
 
