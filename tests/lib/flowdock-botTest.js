@@ -32,8 +32,24 @@ suite('flowdock-bot', function(){
 	test('flowdock-bot.error()', function(){
 	});
 
-	test('flowdock-bot.requestGet()', function(){
+	test('flowdock-bot.requestGet()', function(done){
 
+		_flowdock.getFlows(function(flows){
+			var expected = Array('id','nick','name','email','avatar','status','disabled','last_activity','last_ping','website');
+			var flowName = flows[0].parameterized_name;
+
+			_flowdock.requestGet(flowName, '/users', function(flowName, data){
+
+				j = JSON.parse(data);
+				var actual = Array();
+
+				for(var key in j[0])
+					actual.push(key);
+
+				assert.deepEqual(actual,expected);
+				done();
+			});
+		});
 	});
 
 	test('flowdock-bot.getFlows()', function(done){
