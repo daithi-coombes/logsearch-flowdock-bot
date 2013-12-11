@@ -68,7 +68,7 @@ function main(){
 		//get user data for current flow
 		for(var x=0; x<flows.length; x++){
 			var flowName = flows[x].parameterized_name;
-			flowDock.requestGet( flowName, '/users' );
+			flowDock.getFlow( flowName, '/users' );
 		}
 	});	
 }
