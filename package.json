@@ -12,5 +12,8 @@
 	},
 	"scripts": {
 		"test": "mocha --recursive --ui tdd tests"
+	},
+	"dependencies": {
+		"async": "*"
 	}
 }
