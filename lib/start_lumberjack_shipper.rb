@@ -64,7 +64,7 @@ lumberjack_config = <<-eos
   "files": [
     {
       "paths": [ 
-        "/app/flowdock.log"
+        "/app/logs/flowdock.log"
       ],
       "fields": { "type": "flowdock_bot" }
     }
