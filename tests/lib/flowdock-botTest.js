@@ -11,7 +11,15 @@ suite('flowdock-bot', function(){
 		var dir = process.cwd();
 
 		_flowdock = require( dir + '/lib/flowdock-bot');
-		_flowdock.config = require( dir + '/config/flowdockConfig');
+
+		if(!fs.existsSync(dir + '/config/flowdockConfig.js'))
+			_flowdock.config = {
+				organization: process.env.FLOW_ORG,
+				flowName: process.env.FLOW_NAME,
+				token: process.env.FLOW_TOKEN
+			};
+		else
+			_flowdock.config = require( dir + '/config/flowdockConfig');
 		_flowdock.filename = dir + '/tests/flowdockTest.log';
 		_flowdock.logMaxSize = 1000;
 		_flowdock.url = 'https://' + _flowdock.config.token + '@api.flowdock.com';
