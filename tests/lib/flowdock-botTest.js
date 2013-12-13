@@ -7,9 +7,12 @@ suite('flowdock-bot', function(){
 	var _logEvent;
 
 	setup(function(){
-		_flowdock = require('../../lib/flowdock-bot');
-		_flowdock.config = require('../../config/flowdockConfig');
-		_flowdock.filename = process.cwd() + '/tests/flowdockTest.log';
+
+		var dir = process.cwd();
+
+		_flowdock = require( dir + '/lib/flowdock-bot');
+		_flowdock.config = require( dir + '/config/flowdockConfig');
+		_flowdock.filename = dir + '/tests/flowdockTest.log';
 		_flowdock.logMaxSize = 1000;
 		_flowdock.url = 'https://' + _flowdock.config.token + '@api.flowdock.com';
 		_logEvent = [
