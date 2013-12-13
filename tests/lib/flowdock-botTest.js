@@ -1,5 +1,4 @@
 var assert = require('assert'),
-	async = require('async'),
 	exec = require('child_process').exec,
 	fs = require('fs');
 
