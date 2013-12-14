@@ -105,7 +105,7 @@ suite('flowdock-bot', function(){
 		});
 });
 
-	test('Test log file is being written to: FlowDock.log()', function(){
+	test('Test log file is being written to: FlowDock.log()', function(done){
 
 		fs.readFile(_flowdock.filename, 'utf8', function(err, data){
 			if (err) {
@@ -114,13 +114,14 @@ suite('flowdock-bot', function(){
 			}
 			data = JSON.parse(data.trim());
 			assert.deepEqual(data, _logEvent);
+			done();
 		});
 	});
 
 	test('Count log file length: FlowDock.logLineCount()', function(done){
 
 		var expected = 1;
-
+		
 		_flowdock.logLineCount(function(actual){
 			assert.equal(actual, expected);
 			done();
