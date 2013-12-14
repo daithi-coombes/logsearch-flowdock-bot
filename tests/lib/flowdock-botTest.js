@@ -91,10 +91,8 @@ suite('flowdock-bot', function(){
 		_flowdock.parseResponse('test', JSON.stringify(expected), function(){});
 
 		fs.readFile(_flowdock.filename, 'utf8', function(err, data){
-			if (err) {
-				console.log('Error: ' + err);
-				return;
-			}
+			if (err)
+				throw new Error(err);
 			
 			actual = JSON.parse(data.trim());
 			assert.deepEqual(
@@ -108,10 +106,9 @@ suite('flowdock-bot', function(){
 	test('Test log file is being written to: FlowDock.log()', function(done){
 
 		fs.readFile(_flowdock.filename, 'utf8', function(err, data){
-			if (err) {
-				console.log('Error: ' + err);
-				return;
-			}
+			if (err)
+				throw new Error(err)
+
 			data = JSON.parse(data.trim());
 			assert.deepEqual(data, _logEvent);
 			done();
