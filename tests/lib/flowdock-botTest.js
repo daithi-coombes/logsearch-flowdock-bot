@@ -12,7 +12,7 @@ suite('flowdock-bot', function(){
 
 		_flowdock = require( dir + '/lib/flowdock-bot');
 
-		if(!fs.existsSync(dir + '/config/flowdockConfig.js'))
+		if(!fs.existsSync('../config/flowdockConfig.js'))
 			_flowdock.config = {
 				organization: process.env.FLOW_ORG,
 				flowName: process.env.FLOW_NAME,
@@ -34,7 +34,11 @@ suite('flowdock-bot', function(){
 		try{ //delete test logfile
 			if(fs.lstatSync(_flowdock.filename))
 				fs.unlinkSync(_flowdock.filename);
-		}catch(e){console.log(e)}
+		}catch(e){;}
+		try{
+			if(fs.lstatSync(_flowdock.filename+'.bak'))
+				fs.unlinkSync(_flowdock.filename+'.bak')
+		}catch(e){;}
 
 		_flowdock = undefined;
 	});
