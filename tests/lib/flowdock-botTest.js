@@ -1,5 +1,4 @@
 var assert = require('assert'),
-	async = require('async'),
 	exec = require('child_process').exec,
 	fs = require('fs');
 
@@ -8,9 +7,21 @@ suite('flowdock-bot', function(){
 	var _logEvent;
 
 	setup(function(){
-		_flowdock = require('../../lib/flowdock-bot');
-		_flowdock.config = require('../../config/flowdockConfig');
-		_flowdock.filename = process.cwd() + '/tests/flowdockTest.log';
+
+		var dir = process.cwd();
+
+		_flowdock = require( dir + '/lib/flowdock-bot');
+		_flowdock.error = errorTest;
+
+		if(!fs.existsSync(dir+'/config/flowdockConfig.js'))
+			_flowdock.config = {
+				organization: process.env.FLOW_ORG,
+				flowName: process.env.FLOW_NAME,
+				token: process.env.FLOW_TOKEN
+			};
+		else
+			_flowdock.config = require( dir + '/config/flowdockConfig');
+		_flowdock.filename = dir + '/tests/flowdockTest.log';
 		_flowdock.logMaxSize = 1000;
 		_flowdock.url = 'https://' + _flowdock.config.token + '@api.flowdock.com';
 		_logEvent = [
@@ -24,22 +35,22 @@ suite('flowdock-bot', function(){
 		try{ //delete test logfile
 			if(fs.lstatSync(_flowdock.filename))
 				fs.unlinkSync(_flowdock.filename);
-		}catch(e){console.log(e)}
+		}catch(e){;}
+		try{
+			if(fs.lstatSync(_flowdock.filename+'.bak'))
+				fs.unlinkSync(_flowdock.filename+'.bak')
+		}catch(e){;}
 
 		_flowdock = undefined;
 	});
 
-	test('flowdock-bot.error()', function(){
-	});
-
-	test('flowdock-bot.getFlow()', function(done){
+	test('get user data from a flow: FlowDock.getFlows()', function(done){
 
 		_flowdock.getFlows(function(flows){
 			var expected = Array('id','nick','name','email','avatar','status','disabled','last_activity','last_ping','website','in_flow');
 			var flowName = flows[0].parameterized_name;
 
 			_flowdock.getFlow(flowName, '/users', function(flowName, data){
-
 				j = JSON.parse(data);
 				var actual = Array();
 				for(var key in j[0])
@@ -51,7 +62,7 @@ suite('flowdock-bot', function(){
 		});
 	});
 
-	test('flowdock-bot.getFlows()', function(done){
+	test('get all flows for organization: FlowDock.getFlows()', function(done){
 
 		var expected = _flowdock.config.organization;
 		_flowdock.getFlows(function(flows){
@@ -66,57 +77,55 @@ suite('flowdock-bot', function(){
 		});
 	});
 
-	test('flowdock-bot.parseResponse()', function(done){
+	test('parse user data for flow: FlowDock.parseResponse', function(done){
 	
-		fs.unlinkSync( _flowdock.filename );
+		fs.unlink( _flowdock.filename, function(){
+			var expected = [{
+						id : 1,
+						flow: 'test',
+						organization: _flowdock.config.organization,
+						nick: 'coombesy',
+						last_activity: '2013-05-08T16:07:23.180Z'
+					}];
+			_flowdock.parseResponse('test', JSON.stringify(expected), function(){});
 
-		var expected = [{
-					id : 1,
-					flow: 'test',
-					organization: _flowdock.config.organization,
-					nick: 'coombesy',
-					last_activity: '2013-05-08T16:07:23.180Z'
-				}];
-		_flowdock.parseResponse('test', JSON.stringify(expected), function(){});
+			fs.readFile(_flowdock.filename, 'utf8', function(err, data){
+				if (err)
+					errorTest(err);
+				
+				actual = JSON.parse(data.trim());
+				assert.deepEqual(
+					actual,
+					expected[0]
+				);
+				done();
+			});
+		} );
+	});
 
-		fs.readFile(_flowdock.filename, 'utf8', function(err, data){
-			if (err) {
-				console.log('Error: ' + err);
-				return;
-			}
-			
-			actual = JSON.parse(data.trim());
-			assert.deepEqual(
-				actual,
-				expected[0]
-			);
-			done();
-		});
-});
-
-	test('flowdock-bot.log()', function(){
+	test('Test log file is being written to: FlowDock.log()', function(done){
 
 		fs.readFile(_flowdock.filename, 'utf8', function(err, data){
-			if (err) {
-				console.log('Error: ' + err);
-				return;
-			}
+			if (err)
+				errorTest(err);
+
 			data = JSON.parse(data.trim());
 			assert.deepEqual(data, _logEvent);
+			done();
 		});
 	});
 
-	test('Count log file length', function(done){
+	test('Count log file length: FlowDock.logLineCount()', function(done){
 
 		var expected = 1;
-
+		
 		_flowdock.logLineCount(function(actual){
 			assert.equal(actual, expected);
 			done();
 		});
 	});
 
-	test('Log file backup', function(done){
+	test('Log file backup: FlowDock.logLineCount()', function(done){
 		_flowdock.log( _logEvent );
 
 		_flowdock.logMaxSize = 1;
@@ -124,17 +133,17 @@ suite('flowdock-bot', function(){
 
 		_flowdock.logLineCount(function(){
 			try {
-			    stats = fs.lstatSync(filename+'.bak');
-
-			    if (stats.isFile())
+			    fs.lstat(filename+'.bak', function(){
 			        done();
-			    else
-			    	throw new Error('Backup file not created');
+			    });
 			}
 			catch (e) {
-				console.log(arguments);
-				throw new Error(e);
+				errorTest(e);
 			}
 		});
 	});
 });
+
+function errorTest(e, data){
+	throw new Error(e);
+}
