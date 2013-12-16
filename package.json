@@ -12,7 +12,7 @@
 	},
 	"scripts": {
 		"start": "node ./bin/run",
-		"test": "mocha --recursive --ui tdd tests"
+		"test": "make"
 	},
 	"dependencies": {
 		"mocha": "*",

@@ -2,8 +2,10 @@
 
 //modules
 var YAML = require('yamljs');
-
-//vars
 var dirConfig = __dirname+'/../conf';
-var config = YAML.load(dirConfig+'/flowdock.yml');
+var flowdock = require('../lib/flowdockBot')
+	.setConfig(YAML.load(dirConfig+'/flowdock.yml').env);
+	.run();
+//vars
 
+//setup bot

@@ -1,1 +1,43 @@
 #!/usr/bin/env node
+
+var YAML = require('yamljs'),
+	config, flowdock;
+
+function flowdockBot(){
+
+	var config;
+
+	this.getConfig = function(){
+		return this.config;
+	}
+
+}
+flowdock = new flowdockBot();
+
+var _ = {
+
+	getBot: function(){
+		return flowdock;
+	},
+
+	/**
+	 * Sets the flowdock config.
+	 * @param {object} configYml Location of yaml config file
+	 * @return {object} return's this for chaining
+	 */
+	setConfig: function(obj){
+		flowdock.config = obj;
+		return this;
+	},
+
+	/**
+	 * main() method call
+	 * @return {object} return's this for chaining
+	 */
+	run: function(){
+
+		flow = new flowdockBot();
+	}
+};
+
+module.exports = _;
