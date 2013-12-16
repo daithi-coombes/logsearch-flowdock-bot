@@ -1,1 +1,9 @@
 #!/usr/bin/env node
+
+//modules
+var YAML = require('yamljs');
+
+//vars
+var dirConfig = __dirname+'/../conf';
+var config = YAML.load(dirConfig+'/flowdock.yml');
+

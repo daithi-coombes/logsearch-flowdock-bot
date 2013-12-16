@@ -1,4 +1,4 @@
-config/*
+conf/*
 flowdock.log
 node_modules/*
 npm-debug.log

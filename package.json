@@ -11,9 +11,11 @@
 		"npm":  "1.2.x"
 	},
 	"scripts": {
+		"start": "node ./bin/run",
 		"test": "mocha --recursive --ui tdd tests"
 	},
 	"dependencies": {
-		"mocha": "*"
+		"mocha": "*",
+		"yamljs": "*"
 	}
 }
