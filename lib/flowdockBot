@@ -1,16 +1,42 @@
 #!/usr/bin/env node
 
 var YAML = require('yamljs'),
-	config, flowdock;
+	https = require('https'),
+	flowdock;
 
 function flowdockBot(){
 
-	var config;
+	this.config = {}
+	this.target;
 
 	this.getConfig = function(){
 		return this.config;
 	}
 
+	this.getFlows = function(fn){
+		this.request('/flows', fn);
+		return this;
+	}
+
+	this.parseResponse = function(fn){
+		fn();
+	}
+
+	this.request = function(endpoint, fn){
+
+		var callback;
+		fn ? callback=fn : callback=this.parseResponse;
+		
+		https.get(
+			this.target+endpoint,
+			callback
+		);
+	}
+
+	this.setConfig = function(obj){
+		this.config = obj;
+		this.target = 'https://' + this.config.FLOW_TOKEN + '@api.flowdock.com';
+	}
 }
 flowdock = new flowdockBot();
 
@@ -26,7 +52,7 @@ var _ = {
 	 * @return {object} return's this for chaining
 	 */
 	setConfig: function(obj){
-		flowdock.config = obj;
+		flowdock.setConfig(obj);
 		return this;
 	},
 

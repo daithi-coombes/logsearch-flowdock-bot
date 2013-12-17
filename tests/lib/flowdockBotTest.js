@@ -1,9 +1,15 @@
 var _flowdock = require('../../lib/flowdockBot'),
 	assert = require('assert'),
-	fs = require('fs');
+	fs = require('fs'),
+	YAML = require('yamljs'),
+	config;
 
 
 describe('Flowdock Bot:', function(){
+
+	beforeEach(function(){
+		_flowdock.setConfig(YAML.load('./conf/flowdock.yml').env);
+	});
 
 	it('Should set the config', function(){
 
@@ -19,8 +25,20 @@ describe('Flowdock Bot:', function(){
 	});
 
 
-	describe('/flows API', function(){
-		it('Should make request for flows');
+	describe('Flowdock API:', function(){
+
+		it('Should make request for flows', function(done){
+
+			var bot = _flowdock.getBot();
+
+			bot.getFlows(function(resp){
+				if(resp.statusCode==200)
+					done();
+				else
+					throw new Error(resp.headers.status);
+			});
+		});
+
 		it('Should parse resposne for flows');
 	});
 
