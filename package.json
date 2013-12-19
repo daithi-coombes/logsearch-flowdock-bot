@@ -16,7 +16,6 @@
 	},
 	"dependencies": {
 		"mocha": "*",
-		"mocks": "*",
 		"yamljs": "*",
 		"rewire": "*"
 	}

@@ -1,35 +1,70 @@
 #!/usr/bin/env node
 
 var YAML = require('yamljs'),
+	events = require('events'),
 	https = require('https'),
+	util = require('util'),
 	flowdock;
 
-function flowdockBot(){
+var FlowDockBot = function flowdockBot(){
 
-	this.config = {}
+	events.EventEmitter.call(this);
+
+	this.config = false;
+	this.flows = {};
 	this.target;
+
+	var self = this;
 
 	this.getConfig = function(){
 		return this.config;
 	}
 
 	this.getFlows = function(fn){
-		this.request('/flows', fn);
+
+		var _cb;
+		fn ? _cb=fn : _cb=this.parseFlows;
+		https.get(this.target+'/flows', _cb);
 		return this;
 	}
 
-	this.parseResponse = function(fn){
-		fn();
+	this.getUsers = function(){}
+
+	/**
+	 * Callback for this.getFlows
+	 * @param  {http.serverResponse}   resp The server response
+	 * @param  {callback} fn   Callback
+	 */
+	this.parseFlows = function(resp, cb){
+		var _data = '';
+		var _self = self;
+		var _cb = cb;
+
+		resp.setEncoding('utf8');
+		resp.on( 'data', function(chunk){
+			_data += chunk;
+		});
+		resp.on( 'end', function(){
+			var j = JSON.parse(_data);
+			_self.emit('flowsComplete');
+
+			if(_cb)
+				_cb(j);
+		});
+	}
+
+	this.foo = function(){
+		console.log('foo is called');
 	}
 
 	this.request = function(endpoint, fn){
 
-		var callback;
-		fn ? callback=fn : callback=this.parseResponse;
-		
+		var callback=fn;
+
 		https.get(
 			this.target+endpoint,
-			callback
+			function(resp){
+			}
 		);
 	}
 
@@ -38,7 +73,8 @@ function flowdockBot(){
 		this.target = 'https://' + this.config.FLOW_TOKEN + '@api.flowdock.com';
 	}
 }
-flowdock = new flowdockBot();
+util.inherits(FlowDockBot, events.EventEmitter);
+flowdock = new FlowDockBot();
 
 var _ = {
 
@@ -62,7 +98,14 @@ var _ = {
 	 */
 	run: function(){
 
-		flow = new flowdockBot();
+		if(!flowdock.config)
+			throw new Error('Please set the configuration for flowdock');
+
+		flowdock.getFlows()
+			.on('flowsComplete', flowdock.getUsers)
+			.on('usersComplete', function(){
+				console.log('usersComplete triggered. Write to log file...');
+			});
 	}
 };
 

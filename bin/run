@@ -4,7 +4,7 @@
 var YAML = require('yamljs');
 var dirConfig = __dirname+'/../conf';
 var flowdock = require('../lib/flowdockBot')
-	.setConfig(YAML.load(dirConfig+'/flowdock.yml').env);
+	.setConfig(YAML.load(dirConfig+'/flowdock.yml').env)
 	.run();
 //vars
 
