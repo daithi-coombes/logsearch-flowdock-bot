@@ -1,17 +1,35 @@
-var _flowdock = require('../../lib/flowdockBot'),
-	assert = require('assert'),
-	fs = require('fs'),
-	YAML = require('yamljs'),
-	config;
-
 
 describe('Flowdock Bot:', function(){
 
+	var _flowdock,
+		assert = require('assert'),
+		mocks = require('mocks'),
+		rewire = require('rewire'),
+		YAML = require('yamljs');
+
+	/**
+	 * Mocks literal object for rewire mocking.
+	 * @see https://github.com/jhnns/rewire
+	 * @type {Object}
+	 */
+	var _mocks = {
+		"https" : {
+			"get" : function(url, fn){
+				fn(url, fn);
+			}
+		}
+	};
+
 	beforeEach(function(){
+
+		var libDir = process.cwd();
+		_flowdock = rewire(libDir+'/lib/flowdockBot');
 		_flowdock.setConfig(YAML.load('./conf/flowdock.yml').env);
+
+		_flowdock.__set__(_mocks);
 	});
 
-	it('Should set the config', function(){
+	it('Should set and get the config', function(){
 
 		var expected = {
 			FLOW_ORG: 'foo',
@@ -30,12 +48,11 @@ describe('Flowdock Bot:', function(){
 		it('Should make request for flows', function(done){
 
 			var bot = _flowdock.getBot();
+			var target = bot.target;
 
 			bot.getFlows(function(resp){
-				if(resp.statusCode==200)
+				assert.equal(resp, target+'/flows');
 					done();
-				else
-					throw new Error(resp.headers.status);
 			});
 		});
 
