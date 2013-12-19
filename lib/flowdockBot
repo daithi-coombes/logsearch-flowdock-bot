@@ -11,6 +11,7 @@ var FlowDockBot = function flowdockBot(){
 	events.EventEmitter.call(this);
 
 	this.config = false;
+	this.countUserRequests=0;
 	this.flows = {};
 	this.target;
 
@@ -20,6 +21,12 @@ var FlowDockBot = function flowdockBot(){
 		return this.config;
 	}
 
+	/**
+	 * Makes request for flows.
+	 * @see  self::parseFlows
+	 * @param  {Function} fn Callback
+	 * @return {object}      This instance for chaining
+	 */
 	this.getFlows = function(fn){
 
 		var _cb;
@@ -28,24 +35,48 @@ var FlowDockBot = function flowdockBot(){
 		return this;
 	}
 
-	this.getUsers = function(){}
+	this.getFlowUsers = function(flowName, fn){
+
+		var _cb;
+		var _endpoint = this.target+'/flows/'+this.config.FLOW_ORG+'/'+flowName+'/users'; 
+		fn ? _cb=fn : _cb=this.parseUsers;
+
+		https.get(_endpoint, _cb);
+		self.countUserRequests++;
+		return this;
+	}
+
+	this.getUsers = function(fn){
+		
+		for( var i in this.flows)
+			this.getFlowUsers(this.flows[i].parameterized_name, fn);
+
+		return this;
+	}
 
 	/**
 	 * Callback for this.getFlows
+	 * @event flowsComplete
 	 * @param  {http.serverResponse}   resp The server response
 	 * @param  {callback} fn   Callback
 	 */
 	this.parseFlows = function(resp, cb){
+
 		var _data = '';
 		var _self = self;
 		var _cb = cb;
 
 		resp.setEncoding('utf8');
 		resp.on( 'data', function(chunk){
+
 			_data += chunk;
 		});
 		resp.on( 'end', function(){
+
 			var j = JSON.parse(_data);
+			for(var i in j)
+				_self.flows[j[i].parameterized_name] = j[i];
+
 			_self.emit('flowsComplete');
 
 			if(_cb)
@@ -53,22 +84,31 @@ var FlowDockBot = function flowdockBot(){
 		});
 	}
 
-	this.foo = function(){
-		console.log('foo is called');
-	}
+	this.parseUsers = function(resp, cb){
 
-	this.request = function(endpoint, fn){
+		var _data = '';
+		var _self = self;
+		var _cb = cb;
 
-		var callback=fn;
+		var flowName = resp.req.path.split('/')[3];
 
-		https.get(
-			this.target+endpoint,
-			function(resp){
-			}
-		);
+		resp.setEncoding('utf8');
+		resp.on('data', function(chunk){
+			_data += chunk;
+		});
+		resp.on('end', function(){
+
+			_self.flows[flowName].users = JSON.parse(_data);
+			_self.countUserRequests--;
+			if(_cb)
+				_cb(JSON.parse(_data));
+			if(!_self.countUserRequests)
+				_self.emit('usersComplete');
+		})
 	}
 
 	this.setConfig = function(obj){
+
 		this.config = obj;
 		this.target = 'https://' + this.config.FLOW_TOKEN + '@api.flowdock.com';
 	}
@@ -105,6 +145,14 @@ var _ = {
 			.on('flowsComplete', flowdock.getUsers)
 			.on('usersComplete', function(){
 				console.log('usersComplete triggered. Write to log file...');
+			})
+			.on('end', function(){
+				/**
+				 * Each flowdock.getFlows() request will set a flag to act as
+				 * a blocker. So if the FlowDockBot instance is still waiting
+				 * the on('event') triggers can't get mixed up. The `end` event
+				 * will unblock the FlowDockBot instance.
+				 */
 			});
 	}
 };
