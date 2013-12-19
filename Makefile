@@ -1,6 +1,7 @@
 REPORTER = dot
 
 test:
+	@npm install
 	@NODE_ENV= ./node_modules/.bin/mocha \
 	--reporter $(REPORTER) \
 	--recursive \
