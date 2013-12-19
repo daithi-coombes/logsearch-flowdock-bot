@@ -6,6 +6,10 @@ describe('Flowdock Bot:', function(){
 		mocks = require('mocks'),
 		rewire = require('rewire'),
 		YAML = require('yamljs');
+	var _config = {
+		FLOW_ORG: 'foo',
+		FLOW_TOKEN: '1234567890'
+	};
 
 	/**
 	 * Mocks literal object for rewire mocking.
@@ -24,17 +28,14 @@ describe('Flowdock Bot:', function(){
 
 		var libDir = process.cwd();
 		_flowdock = rewire(libDir+'/lib/flowdockBot');
-		_flowdock.setConfig(YAML.load('./conf/flowdock.yml').env);
+		_flowdock.setConfig(_config);
 
 		_flowdock.__set__(_mocks);
 	});
 
 	it('Should set and get the config', function(){
 
-		var expected = {
-			FLOW_ORG: 'foo',
-			FLOW_TOKEN: '1234567890'
-		};
+		var expected = _config;
 		var actual = _flowdock.setConfig(expected)
 			.getBot()
 			.config;
