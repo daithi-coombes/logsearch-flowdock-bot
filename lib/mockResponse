@@ -8,7 +8,7 @@ var util = require('util');
  * @type {Object}
  */
 var mockResponse;
-Eventer = function(){
+var Eventer = function(){
 	events.EventEmitter.call(this);
 
 	this.data = '';
@@ -32,3 +32,11 @@ Eventer = function(){
 };
 util.inherits(Eventer, events.EventEmitter);
 
+var _ = {
+
+	getMock: function(){
+		return new Eventer();
+	}
+}
+
+module.exports = _;
