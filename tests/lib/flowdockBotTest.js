@@ -1,41 +1,13 @@
 var _flowdock,
 	assert = require('assert'),
 	events = require('events'),
+	mockResponse = require('../../lib/mockResponse'),
 	rewire = require('rewire'),
 	util = require('util'),
 	_config = {
 		FLOW_ORG: 'foo',
 		FLOW_TOKEN: '1234567890'
 	};
-
-/**
- * Mock https.serverResponse
- * @type {Object}
- */
-var mockResponse;
-Eventer = function(){
-	events.EventEmitter.call(this);
-
-	this.data = '';
-
-	this.onData = function(){
-		this.emit('data', this.data);
-	}
-
-	this.setEncoding = function(){
-
-	}
-
-	this.onEnd = function(){
-		this.emit('end', this.data);
-	}
-
-	this.run = function(){
-		this.onData();
-		this.onEnd();
-	}
-};
-util.inherits(Eventer, events.EventEmitter);
 
 /**
  * Mocks literal object for rewire mocking.
@@ -153,7 +125,13 @@ describe('Flowdock Bot:', function(){
 	 * Logging tests
 	 */
 	describe('Logs', function(){
-		it('Should write to log file');
+
+		it('Should write to log file', function(done){
+
+			
+			done();
+		});
+
 		it('Should create backup');
 	});// end Logging tests
 });

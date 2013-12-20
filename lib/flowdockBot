@@ -3,6 +3,7 @@
 var YAML = require('yamljs'),
 	events = require('events'),
 	https = require('https'),
+	logger = require('npmlog'),
 	util = require('util'),
 	flowdock;
 
@@ -112,6 +113,14 @@ var FlowDockBot = function flowdockBot(){
 		this.config = obj;
 		this.target = 'https://' + this.config.FLOW_TOKEN + '@api.flowdock.com';
 	}
+
+	this.writeLog = function(){
+
+		if(!Object.keys(foo).length)
+			throw new Error('No data recieved for writeLog()');
+
+
+	}
 }
 util.inherits(FlowDockBot, events.EventEmitter);
 flowdock = new FlowDockBot();
@@ -143,9 +152,7 @@ var _ = {
 
 		flowdock.getFlows()
 			.on('flowsComplete', flowdock.getUsers)
-			.on('usersComplete', function(){
-				console.log('usersComplete triggered. Write to log file...');
-			})
+			.on('usersComplete', flowdock.writeLog)
 			.on('end', function(){
 				/**
 				 * Each flowdock.getFlows() request will set a flag to act as

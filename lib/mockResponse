@@ -1,0 +1,34 @@
+#!/usr/bin/env node
+
+var events = require('events');
+var util = require('util');
+
+/**
+ * Mock https.serverResponse
+ * @type {Object}
+ */
+var mockResponse;
+Eventer = function(){
+	events.EventEmitter.call(this);
+
+	this.data = '';
+
+	this.onData = function(){
+		this.emit('data', this.data);
+	}
+
+	this.setEncoding = function(){
+
+	}
+
+	this.onEnd = function(){
+		this.emit('end', this.data);
+	}
+
+	this.run = function(){
+		this.onData();
+		this.onEnd();
+	}
+};
+util.inherits(Eventer, events.EventEmitter);
+
