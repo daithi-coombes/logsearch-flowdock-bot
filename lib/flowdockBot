@@ -14,6 +14,7 @@ var FlowDockBot = function flowdockBot(){
 	this.config = false;
 	this.countUserRequests=0;
 	this.flows = {};
+	this.logData = [];
 	this.target;
 
 	var self = this;
@@ -99,10 +100,13 @@ var FlowDockBot = function flowdockBot(){
 		});
 		resp.on('end', function(){
 
-			_self.flows[flowName].users = JSON.parse(_data);
+			var j = JSON.parse(_data);
+			_self.flows[flowName].users = j;
 			_self.countUserRequests--;
+
 			if(_cb)
-				_cb(JSON.parse(_data));
+				_cb(j);
+
 			if(!_self.countUserRequests)
 				_self.emit('usersComplete');
 		})
@@ -114,11 +118,36 @@ var FlowDockBot = function flowdockBot(){
 		this.target = 'https://' + this.config.FLOW_TOKEN + '@api.flowdock.com';
 	}
 
-	this.writeLog = function(){
+	this.getLogData = function(fn){
 
-		if(!Object.keys(foo).length)
-			throw new Error('No data recieved for writeLog()');
+		if(!Object.keys(self.flows).length)
+			throw new Error('No data recieved for writeLog(): FlowDockBot.flows is empty');
 
+		var res = [];
+
+		//loop through flows
+		for(var i in self.flows)
+
+			//loop through users
+			for(var x in self.flows[i].users)
+				res.push({
+					id: self.flows[i].users[x].id,
+					flow: self.flows[i].parameterized_name,
+					organization: self.config.FLOW_ORG,
+					nick: self.flows[i].users[x].nick,
+					last_activity: new Date(self.flows[i].users[x].last_activity).toISOString()
+				})
+
+		self.logData = res;
+
+		//do callback
+		if(fn)
+			fn(res);
+
+		return this;
+	}
+
+	this.writeData = function(){
 
 	}
 }
@@ -152,15 +181,15 @@ var _ = {
 
 		flowdock.getFlows()
 			.on('flowsComplete', flowdock.getUsers)
-			.on('usersComplete', flowdock.writeLog)
-			.on('end', function(){
-				/**
-				 * Each flowdock.getFlows() request will set a flag to act as
-				 * a blocker. So if the FlowDockBot instance is still waiting
-				 * the on('event') triggers can't get mixed up. The `end` event
-				 * will unblock the FlowDockBot instance.
-				 */
-			});
+			.on('usersComplete', flowdock.getLogData)
+			.writeData();
+
+			/**
+			 * Each flowdock.getFlows() request will set a flag to act as
+			 * a blocker. So if the FlowDockBot instance is still waiting
+			 * the on('event') triggers can't get mixed up. The `end` event
+			 * will unblock the FlowDockBot instance.
+			 */
 	}
 };
 
