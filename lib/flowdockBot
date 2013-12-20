@@ -2,25 +2,27 @@
 
 var YAML = require('yamljs'),
 	events = require('events'),
+	fs = require('fs'),
 	https = require('https'),
 	logger = require('npmlog'),
 	util = require('util'),
-	flowdock;
+	flowdock
 
 var FlowDockBot = function flowdockBot(){
 
-	events.EventEmitter.call(this);
+	events.EventEmitter.call(this)
 
-	this.config = false;
-	this.countUserRequests=0;
-	this.flows = {};
-	this.logData = [];
-	this.target;
+	this.config = false
+	this.countUserRequests=0
+	this.filename = process.cwd()+'/logs/flowdock.log'
+	this.flows = {}
+	this.logData = []
+	this.target
 
-	var self = this;
+	var self = this
 
 	this.getConfig = function(){
-		return this.config;
+		return this.config
 	}
 
 	/**
@@ -31,29 +33,29 @@ var FlowDockBot = function flowdockBot(){
 	 */
 	this.getFlows = function(fn){
 
-		var _cb;
-		fn ? _cb=fn : _cb=this.parseFlows;
-		https.get(this.target+'/flows', _cb);
-		return this;
+		var _cb
+		fn ? _cb=fn : _cb=this.parseFlows
+		https.get(this.target+'/flows', _cb)
+		return this
 	}
 
 	this.getFlowUsers = function(flowName, fn){
 
-		var _cb;
-		var _endpoint = this.target+'/flows/'+this.config.FLOW_ORG+'/'+flowName+'/users'; 
-		fn ? _cb=fn : _cb=this.parseUsers;
+		var _cb
+		var _endpoint = this.target+'/flows/'+this.config.FLOW_ORG+'/'+flowName+'/users' 
+		fn ? _cb=fn : _cb=this.parseUsers
 
-		https.get(_endpoint, _cb);
-		self.countUserRequests++;
-		return this;
+		https.get(_endpoint, _cb)
+		self.countUserRequests++
+		return this
 	}
 
 	this.getUsers = function(fn){
 		
 		for( var i in this.flows)
-			this.getFlowUsers(this.flows[i].parameterized_name, fn);
+			this.getFlowUsers(this.flows[i].parameterized_name, fn)
 
-		return this;
+		return this
 	}
 
 	/**
@@ -64,66 +66,66 @@ var FlowDockBot = function flowdockBot(){
 	 */
 	this.parseFlows = function(resp, cb){
 
-		var _data = '';
-		var _self = self;
-		var _cb = cb;
+		var _data = ''
+		var _self = self
+		var _cb = cb
 
-		resp.setEncoding('utf8');
+		resp.setEncoding('utf8')
 		resp.on( 'data', function(chunk){
 
-			_data += chunk;
-		});
+			_data += chunk
+		})
 		resp.on( 'end', function(){
 
-			var j = JSON.parse(_data);
+			var j = JSON.parse(_data)
 			for(var i in j)
-				_self.flows[j[i].parameterized_name] = j[i];
+				_self.flows[j[i].parameterized_name] = j[i]
 
-			_self.emit('flowsComplete');
+			_self.emit('flowsComplete')
 
 			if(_cb)
-				_cb(j);
-		});
+				_cb(j)
+		})
 	}
 
 	this.parseUsers = function(resp, cb){
 
-		var _data = '';
-		var _self = self;
-		var _cb = cb;
+		var _data = ''
+		var _self = self
+		var _cb = cb
 
-		var flowName = resp.req.path.split('/')[3];
+		var flowName = resp.req.path.split('/')[3]
 
-		resp.setEncoding('utf8');
+		resp.setEncoding('utf8')
 		resp.on('data', function(chunk){
-			_data += chunk;
-		});
+			_data += chunk
+		})
 		resp.on('end', function(){
 
-			var j = JSON.parse(_data);
-			_self.flows[flowName].users = j;
-			_self.countUserRequests--;
+			var j = JSON.parse(_data)
+			_self.flows[flowName].users = j
+			_self.countUserRequests--
 
 			if(_cb)
-				_cb(j);
+				_cb(j)
 
 			if(!_self.countUserRequests)
-				_self.emit('usersComplete');
+				_self.emit('usersComplete')
 		})
 	}
 
 	this.setConfig = function(obj){
 
-		this.config = obj;
-		this.target = 'https://' + this.config.FLOW_TOKEN + '@api.flowdock.com';
+		this.config = obj
+		this.target = 'https://' + this.config.FLOW_TOKEN + '@api.flowdock.com'
 	}
 
 	this.getLogData = function(fn){
 
 		if(!Object.keys(self.flows).length)
-			throw new Error('No data recieved for writeLog(): FlowDockBot.flows is empty');
+			throw new Error('No data recieved for writeLog(): FlowDockBot.flows is empty')
 
-		var res = [];
+		var res = []
 
 		//loop through flows
 		for(var i in self.flows)
@@ -138,26 +140,50 @@ var FlowDockBot = function flowdockBot(){
 					last_activity: new Date(self.flows[i].users[x].last_activity).toISOString()
 				})
 
-		self.logData = res;
+		self.logData = res
+		self.emit('logData')
 
 		//do callback
 		if(fn)
-			fn(res);
+			fn(res)
 
-		return this;
+		return this
 	}
 
-	this.writeData = function(){
+	this.writeData = function(fn){
+		
+		if(!Object.keys(self.logData).length)
+			throw new Error('FlowDockBot.logData is empty. No logData gathered')
 
+		//vars
+		var cb,
+			log = []
+			_self = self
+
+		//build up logfile data
+		self.logData.forEach(function logDataTestForEach(item, index){
+			log.push(JSON.stringify(item))
+		})
+
+		//construct callback
+		fn ? 
+			cb = fn : 
+			cb = function(err){ _self.emit('endLogWrite') }
+
+		//write log, clean up
+		fs.appendFile(this.filename, log.join('\n'), cb)
+		self.emit('logFinished')
+        self.logData = new Array()
+        return self
 	}
 }
-util.inherits(FlowDockBot, events.EventEmitter);
-flowdock = new FlowDockBot();
+util.inherits(FlowDockBot, events.EventEmitter)
+flowdock = new FlowDockBot()
 
 var _ = {
 
 	getBot: function(){
-		return flowdock;
+		return flowdock
 	},
 
 	/**
@@ -166,23 +192,28 @@ var _ = {
 	 * @return {object} return's this for chaining
 	 */
 	setConfig: function(obj){
-		flowdock.setConfig(obj);
-		return this;
+		flowdock.setConfig(obj)
+		return this
 	},
 
 	/**
 	 * main() method call
 	 * @return {object} return's this for chaining
 	 */
-	run: function(){
+	run: function(filename){
 
 		if(!flowdock.config)
-			throw new Error('Please set the configuration for flowdock');
+			throw new Error('Please set the configuration for flowdock')
+
+		if(filename)
+			flowdock.filename = filename
 
 		flowdock.getFlows()
 			.on('flowsComplete', flowdock.getUsers)
 			.on('usersComplete', flowdock.getLogData)
-			.writeData();
+			.on('logData', function(){
+				flowdock.writeData()
+			})
 
 			/**
 			 * Each flowdock.getFlows() request will set a flag to act as
@@ -191,6 +222,6 @@ var _ = {
 			 * will unblock the FlowDockBot instance.
 			 */
 	}
-};
+}
 
-module.exports = _;
+module.exports = _
