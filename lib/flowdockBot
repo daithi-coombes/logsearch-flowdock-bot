@@ -101,8 +101,6 @@ var FlowDockBot = function flowdockBot(){
 
 		//get logfile line count
 		var cmd = 'wc "'+self.filename+'" | awk {\'print $1\'}'
-		console.log('running:...')
-		console.log(cmd)
 		exec(cmd, function FlowDockBot_logBackupExec(error, results) {
 
 			if(error)
@@ -115,8 +113,7 @@ var FlowDockBot = function flowdockBot(){
 			if( res > _self.maxLogSize ){
 
 				//create backup
-				var cmd = 'mv '+_self.filename+' '+_self.filename+'.bak'
-				console.log(cmd)
+				var cmd = 'mv "'+_self.filename+'" "'+_self.filename+'.bak"'
 				exec(cmd, function(err){
 
 					if(err)
