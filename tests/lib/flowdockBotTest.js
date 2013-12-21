@@ -193,8 +193,11 @@ describe('Flowdock Bot:', function(){
 			//create test logfile
 			for(var i=1; i<50; i++)
 				fooData += i+'\n'
-			
+
 			fs.appendFile(bot.filename, fooData, function createBackupUnitTest(err){
+
+				if(err)
+					throw new Error(err)
 
 				//try backup
 				bot.logBackup(function(ok){
