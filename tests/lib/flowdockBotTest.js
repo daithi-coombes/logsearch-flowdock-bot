@@ -183,7 +183,12 @@ describe('Flowdock Bot:', function(){
 				})
 		})
 
-		it('Should create backup')
+		it('Should create backup', function(done){
+
+			bot.logBackup(function(){
+				done();
+			});
+		})
 	})// end Logging tests
 })
 
