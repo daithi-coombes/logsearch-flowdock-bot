@@ -190,7 +190,9 @@ describe('Flowdock Bot:', function(){
 			bot.filename = process.cwd()+'/tests/logs/flowdock.log'
 			bot.maxLogSize = 2
 
-			//create test logfile
+			
+			
+			//logfile data
 			for(var i=1; i<50; i++)
 				fooData += i+'\n'
 
