@@ -13,6 +13,7 @@ var FlowDockBot = function flowdockBot(){
 
 	events.EventEmitter.call(this)
 
+	this.backupLogFile = true
 	this.config = false
 	this.countUserRequests=0
 	this.filename = process.cwd()+'/logs/flowdock.log'
@@ -90,25 +91,36 @@ var FlowDockBot = function flowdockBot(){
 		return this
 	}
 
+	/**
+	 * Backup logfile
+	 * @param  {Function} fn Callback. Takes a boolean param
+	 */
 	this.logBackup = function(fn){
 
 		var _self = self
 
 		//get logfile line count
-		var cmd = 'wc "'+_self.filename+'" | awk {\'print $1\'}'
+		var cmd = 'wc "'+self.filename+'" | awk {\'print $1\'}'
 		exec(cmd, function FlowDockBot_logBackupExec(error, results) {
 
 			if(error)
 				throw new Error(error)
 
 			res = parseInt(results.trim())
+			_fn = fn
 
-			if(  res > this.maxLogSize ){
+			//compare result with maxLogSize
+			if( res > _self.maxLogSize ){
 
-				exec('mv '+_self.filename+' '+_self.filename+'.bak', fn)
+				//create backup
+				exec('mv '+_self.filename+' '+_self.filename+'.bak', function(){
+					_fn(true)
+				})
 				if(!fn)
 					console.log('Backed up '+_self.filename+' to '+_self.filename+'.bak')
 			}
+
+			//default run callback
 			else if(fn)
 				fn(res)
 		})		
@@ -204,6 +216,8 @@ var FlowDockBot = function flowdockBot(){
 		fs.appendFile(this.filename, log.join('\n'), cb)
         return self
 	}
+
+	this.on('endLogWrite', this.logBackup)
 }
 util.inherits(FlowDockBot, events.EventEmitter)
 flowdock = new FlowDockBot()

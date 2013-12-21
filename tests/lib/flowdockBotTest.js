@@ -1,5 +1,6 @@
 var assert = require('assert'),
 	events = require('events'),
+	fs = require('fs')
 	rewire = require('rewire'),
 	util = require('util')
 
@@ -185,9 +186,23 @@ describe('Flowdock Bot:', function(){
 
 		it('Should create backup', function(done){
 
-			bot.logBackup(function(){
-				done();
-			});
+			var fooData
+			bot.filename = process.cwd()+'/tests/logs/flowdock.log'
+			bot.maxLogSize = 2
+
+			//create test logfile
+			for(var i=1; i<50; i++)
+				fooData += i+'\n'
+			
+			fs.appendFile(bot.filename, fooData, function createBackupUnitTest(err){
+
+				//try backup
+				bot.logBackup(function(ok){
+					if(ok)
+						done();
+				});
+			})
+
 		})
 	})// end Logging tests
 })
