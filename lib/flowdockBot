@@ -113,7 +113,11 @@ var FlowDockBot = function flowdockBot(){
 			if( res > _self.maxLogSize ){
 
 				//create backup
-				exec('mv '+_self.filename+' '+_self.filename+'.bak', function(){
+				exec('mv '+_self.filename+' '+_self.filename+'.bak', function(err){
+
+					if(err)
+						throw new Error(error)
+					
 					_fn(true)
 				})
 				if(!fn)
