@@ -116,8 +116,8 @@ var FlowDockBot = function flowdockBot(){
 				exec('mv '+_self.filename+' '+_self.filename+'.bak', function(err){
 
 					if(err)
-						throw new Error(error)
-					
+						throw new Error(err)
+
 					_fn(true)
 				})
 				if(!fn)
