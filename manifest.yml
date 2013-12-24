@@ -2,5 +2,5 @@
 applications:
 - name: logsearch-flowdock-bot
   buildpack: https://github.com/cloudfoundry/heroku-buildpack-nodejs.git
-  command: ./lib/start.sh "node bin/run" "ruby ./lib/start_lumberjack_shipper.rb"
+  command: ./lib/start.sh "node bin/run" "ruby ./lib/start_shipper_logger.rb"
 inherit: ./conf/flowdock.yml
