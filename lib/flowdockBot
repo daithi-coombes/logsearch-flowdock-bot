@@ -34,9 +34,8 @@ var FlowDockBot = function flowdockBot(){
 
 	/**
 	 * Makes request for flows.
-	 * @see  self::parseFlows
 	 * @param  {Function} fn Callback
-	 * @return {object}      This instance for chaining
+	 * @return {FlowDockBot}      This instance for chaining
 	 */
 	this.getFlows = function(fn){
 
@@ -46,6 +45,12 @@ var FlowDockBot = function flowdockBot(){
 		return this
 	}
 
+	/**
+	 * Request user data for a flow
+	 * @param  {string}   flowName Parametrized flow name
+	 * @param  {Function} fn       Callback. Default FlowDockBot.parseUsers
+	 * @return {FlowDockBot}            This instance for chaining
+	 */
 	this.getFlowUsers = function(flowName, fn){
 
 		var _cb
@@ -57,6 +62,11 @@ var FlowDockBot = function flowdockBot(){
 		return this
 	}
 
+	/**
+	 * Create self.logData array from self.flows info
+	 * @param  {Function} fn Callback
+	 * @return {FlowDockBot}      This instanace for chaining
+	 */
 	this.getLogData = function(fn){
 
 		if(!Object.keys(self.flows).length)
@@ -77,8 +87,6 @@ var FlowDockBot = function flowdockBot(){
 					last_activity: new Date(self.flows[i].users[x].last_activity).toISOString()
 				})
 
-		console.log(Object.keys(self.flows).length)
-
 		self.logData = res
 		self.emit('logData')
 
@@ -89,6 +97,11 @@ var FlowDockBot = function flowdockBot(){
 		return this
 	}
 
+	/**
+	 * Wrapper for getFlowUsers. Loops through this.flows and requests users
+	 * @param  {Function} fn Callback, gets passed to this.getFlowUsers
+	 * @return {FlowDockBot}      This instace for chaining
+	 */
 	this.getUsers = function(fn){
 		
 		for( var i in this.flows)
@@ -106,13 +119,9 @@ var FlowDockBot = function flowdockBot(){
 		var _self = self
 			fn = fn
 
+		//test if logfile currently being backed up
 		if(_self.flags.WRITING_BACKUP) return
 		_self.flags.WRITING_BACKUP = true
-
-		console.log('********************')
-		console.log(' checking backup ')
-		console.log('********************')
-		console.log(' ')
 
 		//get logfile line count
 		var cmd = 'wc "'+self.filename+'" | awk {\'print $1\'}'
@@ -125,22 +134,11 @@ var FlowDockBot = function flowdockBot(){
 				_fn = fn
 				_self = _self
 
-			console.log('********************')
-			console.log(' logfile line count: ')
-			console.log(res)
-			console.log(' maxLogSize: ')
-			console.log(_self.maxLogSize)
-			console.log(' ')
-
 			//compare result with maxLogSize
 			if( res > _self.maxLogSize ){
 
-				console.log('res: '+results)
-				console.log('_self.maxLogSize: '+_self.maxLogSize)
-
 				//create backup
 				var cmd = 'mv "'+_self.filename+'" "'+_self.filename+'.bak"'
-				console.log(cmd)
 				exec(cmd, function(err){
 
 					if(err)
@@ -162,7 +160,7 @@ var FlowDockBot = function flowdockBot(){
 	}
 
 	/**
-	 * Callback for this.getFlows
+	 * Callback for this.getFlows. Parses flow information to this.flows
 	 * @event flowsComplete
 	 * @param  {http.serverResponse}   resp The server response
 	 * @param  {callback} fn   Callback
@@ -191,6 +189,11 @@ var FlowDockBot = function flowdockBot(){
 		})
 	}
 
+	/**
+	 * Callback for this.getFlowUsers. Parses flow user data to this.flows
+	 * @param  {http.serverResponse}   resp The server response
+	 * @param  {Function} cb   Callback Takes server.body json as param
+	 */
 	this.parseUsers = function(resp, cb){
 
 		var _data = ''
@@ -217,12 +220,21 @@ var FlowDockBot = function flowdockBot(){
 		})
 	}
 
+	/**
+	 * Sets config and target url
+	 * @param {object} obj The config object
+	 */
 	this.setConfig = function(obj){
 
 		this.config = obj
 		this.target = 'https://' + this.config.FLOW_TOKEN + '@api.flowdock.com'
 	}
 
+	/**
+	 * Writes this.logData to log file
+	 * @param  {Function} fn Callback. Deftaul defined in this method
+	 * @return {FlowDockBot}      This instance for chaining
+	 */
 	this.writeData = function(fn){
 		
 		if(!Object.keys(self.logData).length)
@@ -259,6 +271,10 @@ flowdock = new FlowDockBot()
 
 var _ = {
 
+	/**
+	 * Returns the FlowDockBot instance
+	 * @return {FlowDockBot} The current module instance
+	 */
 	getBot: function(){
 		return flowdock
 	},
@@ -297,13 +313,6 @@ var _ = {
 			}, timer)
 
 		return this
-
-			/**
-			 * Each flowdock.getFlows() request will set a flag to act as
-			 * a blocker. So if the FlowDockBot instance is still waiting
-			 * the on('event') triggers can't get mixed up. The `end` event
-			 * will unblock the FlowDockBot instance.
-			 */
 	}
 }
 
