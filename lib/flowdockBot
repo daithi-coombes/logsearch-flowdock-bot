@@ -12,17 +12,18 @@ var YAML = require('yamljs'),
 var FlowDockBot = function flowdockBot(){
 
 	events.EventEmitter.call(this)
+	this.setMaxListeners(0)
 
 	this.backupLogFile = true
 	this.config = false
 	this.countUserRequests=0
 	this.filename = process.cwd()+'/logs/flowdock.log'
-	this.flags = {
+	this.flags = { //@see FlowDockBot.logBackup()
 		'WRITING_BACKUP': false
 	}
 	this.flows = {}
 	this.logData = []
-	this.maxLogSize = 1000
+	this.maxLogSize = 5
 	this.target
 
 	var self = this
@@ -75,6 +76,8 @@ var FlowDockBot = function flowdockBot(){
 					nick: self.flows[i].users[x].nick,
 					last_activity: new Date(self.flows[i].users[x].last_activity).toISOString()
 				})
+
+		console.log(Object.keys(self.flows).length)
 
 		self.logData = res
 		self.emit('logData')
@@ -284,15 +287,13 @@ var _ = {
 		if(filename)
 			flowdock.filename = filename
 
+		flowdock.on('flowsComplete', flowdock.getUsers)
+			.on('usersComplete', flowdock.getLogData)
+			.on('logData', flowdock.writeData)
+			.on('endLogWrite', flowdock.logBackup)
+
 		setInterval(function(){
 			flowdock.getFlows()
-				.on('flowsComplete', flowdock.getUsers)
-				.on('usersComplete', flowdock.getLogData)
-				.on('logData', function(){
-					flowdock.writeData()
-				})
-				.once('endLogWrite', flowdock.logBackup)
-
 			}, timer)
 
 		return this

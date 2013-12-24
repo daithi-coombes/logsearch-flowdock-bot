@@ -59,6 +59,7 @@ describe('Flowdock Bot:', function(){
 		}
 
 		_flowdock.setConfig(_config)
+		_flowdock.filename = process.cwd()+'/tests/logs/flowdock.log'
 		_flowdock.__set__(_mocks)
 	})
 
