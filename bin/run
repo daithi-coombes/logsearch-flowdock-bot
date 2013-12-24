@@ -7,4 +7,4 @@ var config = YAML.load(dirConfig+'/flowdock.yml').env
 
 var flowdock = require('../lib/flowdockBot')
 	.setConfig(config)
-	.run('logs/flowdock.log', 1*1000)
+	.run('logs/flowdock.log', 5*60*1000)

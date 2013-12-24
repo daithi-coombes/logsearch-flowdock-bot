@@ -23,7 +23,7 @@ var FlowDockBot = function flowdockBot(){
 	}
 	this.flows = {}
 	this.logData = []
-	this.maxLogSize = 5
+	this.maxLogSize = 10000
 	this.target
 
 	var self = this
