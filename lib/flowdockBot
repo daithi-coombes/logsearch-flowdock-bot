@@ -17,6 +17,9 @@ var FlowDockBot = function flowdockBot(){
 	this.config = false
 	this.countUserRequests=0
 	this.filename = process.cwd()+'/logs/flowdock.log'
+	this.flags = {
+		'WRITING_BACKUP': false
+	}
 	this.flows = {}
 	this.logData = []
 	this.maxLogSize = 1000
@@ -98,6 +101,15 @@ var FlowDockBot = function flowdockBot(){
 	this.logBackup = function(fn){
 
 		var _self = self
+			fn = fn
+
+		if(_self.flags.WRITING_BACKUP) return
+		_self.flags.WRITING_BACKUP = true
+
+		console.log('********************')
+		console.log(' checking backup ')
+		console.log('********************')
+		console.log(' ')
 
 		//get logfile line count
 		var cmd = 'wc "'+self.filename+'" | awk {\'print $1\'}'
@@ -106,27 +118,42 @@ var FlowDockBot = function flowdockBot(){
 			if(error)
 				throw new Error(error)
 
-			res = parseInt(results.trim())
-			_fn = fn
+			var res = parseInt(results.trim())
+				_fn = fn
+				_self = _self
+
+			console.log('********************')
+			console.log(' logfile line count: ')
+			console.log(res)
+			console.log(' maxLogSize: ')
+			console.log(_self.maxLogSize)
+			console.log(' ')
 
 			//compare result with maxLogSize
 			if( res > _self.maxLogSize ){
 
+				console.log('res: '+results)
+				console.log('_self.maxLogSize: '+_self.maxLogSize)
+
 				//create backup
 				var cmd = 'mv "'+_self.filename+'" "'+_self.filename+'.bak"'
+				console.log(cmd)
 				exec(cmd, function(err){
 
 					if(err)
 						throw new Error(err)
 
-					_fn(true)
+					if(typeof(fn) == 'function')
+						_fn(true)
+
+
+					_self.flags.WRITING_BACKUP = false
 				})
-				if(!fn)
-					console.log('Backed up '+_self.filename+' to '+_self.filename+'.bak')
 			}
+			else _self.flags.WRITING_BACKUP = false
 
 			//default run callback
-			else if(fn)
+			if(typeof(fn) == 'function')
 				fn(res)
 		})		
 	}
@@ -212,9 +239,10 @@ var FlowDockBot = function flowdockBot(){
 		fn ? 
 			cb = fn : 
 			cb = function(err){ 
-				_self.emit('endLogWrite') 
+				_self.emit('endLogWrite')
 				_self.emit('logFinished')
 		        _self.logData = new Array()
+		        console.log('********** data written')
 			}
 
 		//write log, clean up
@@ -222,7 +250,6 @@ var FlowDockBot = function flowdockBot(){
         return self
 	}
 
-	this.on('endLogWrite', this.logBackup)
 }
 util.inherits(FlowDockBot, events.EventEmitter)
 flowdock = new FlowDockBot()
@@ -249,7 +276,7 @@ var _ = {
 	 * eg: 'logs/flowdock.log'
 	 * @return {object} return's this for chaining
 	 */
-	run: function(filename){
+	run: function(filename, timer){
 
 		if(!flowdock.config)
 			throw new Error('Please set the configuration for flowdock')
@@ -257,12 +284,16 @@ var _ = {
 		if(filename)
 			flowdock.filename = filename
 
-		flowdock.getFlows()
-			.on('flowsComplete', flowdock.getUsers)
-			.on('usersComplete', flowdock.getLogData)
-			.on('logData', function(){
-				flowdock.writeData()
-			})
+		setInterval(function(){
+			flowdock.getFlows()
+				.on('flowsComplete', flowdock.getUsers)
+				.on('usersComplete', flowdock.getLogData)
+				.on('logData', function(){
+					flowdock.writeData()
+				})
+				.once('endLogWrite', flowdock.logBackup)
+
+			}, timer)
 
 		return this
 

@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 
 //modules
-var YAML = require('yamljs');
-var dirConfig = __dirname+'/../conf';
+var YAML = require('yamljs')
+var dirConfig = __dirname+'/../conf'
+var config = YAML.load(dirConfig+'/flowdock.yml').env
+
 var flowdock = require('../lib/flowdockBot')
-	.setConfig(YAML.load(dirConfig+'/flowdock.yml').env)
-	.run('logs/flowdock.log');
+	.setConfig(config)
+	.run('logs/flowdock.log', 1*1000)
