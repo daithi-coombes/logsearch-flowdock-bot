@@ -11,9 +11,13 @@
 		"npm":  "1.2.x"
 	},
 	"scripts": {
-		"test": "mocha --recursive --ui tdd tests"
+		"start": "node ./bin/run",
+		"test": "make"
 	},
 	"dependencies": {
-		"mocha": "*"
+		"mocha": "*",
+		"npmlog": "*",
+		"yamljs": "*",
+		"rewire": "*"
 	}
 }

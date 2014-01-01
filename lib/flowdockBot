@@ -1,0 +1,319 @@
+#!/usr/bin/env node
+
+var YAML = require('yamljs'),
+	events = require('events'),
+	exec = require('child_process').exec,
+	fs = require('fs'),
+	https = require('https'),
+	logger = require('npmlog'),
+	util = require('util'),
+	flowdock
+
+var FlowDockBot = function flowdockBot(){
+
+	events.EventEmitter.call(this)
+	this.setMaxListeners(0)
+
+	this.backupLogFile = true
+	this.config = false
+	this.countUserRequests=0
+	this.filename = process.cwd()+'/logs/flowdock.log'
+	this.flags = { //@see Timing flag for FlowDockBot.logBackup()
+		'WRITING_BACKUP': false
+	}
+	this.flows = {}
+	this.logData = []
+	this.maxLogSize = 10000
+	this.target
+
+	var self = this
+
+	this.getConfig = function(){
+		return this.config
+	}
+
+	/**
+	 * Makes request for flows.
+	 * @param  {Function} fn Callback
+	 * @return {FlowDockBot}      This instance for chaining
+	 */
+	this.getFlows = function(fn){
+
+		var _cb
+		fn ? _cb=fn : _cb=this.parseFlows
+		https.get(this.target+'/flows', _cb)
+		return this
+	}
+
+	/**
+	 * Request user data for a flow
+	 * @param  {string}   flowName Parametrized flow name
+	 * @param  {Function} fn       Callback. Default FlowDockBot.parseUsers
+	 * @return {FlowDockBot}            This instance for chaining
+	 */
+	this.getFlowUsers = function(flowName, fn){
+
+		var _cb
+		var _endpoint = this.target+'/flows/'+this.config.FLOW_ORG+'/'+flowName+'/users' 
+		fn ? _cb=fn : _cb=this.parseUsers
+
+		https.get(_endpoint, _cb)
+		self.countUserRequests++
+		return this
+	}
+
+	/**
+	 * Create self.logData array from self.flows info
+	 * @param  {Function} fn Callback
+	 * @return {FlowDockBot}      This instanace for chaining
+	 */
+	this.getLogData = function(fn){
+
+		if(!Object.keys(self.flows).length)
+			throw new Error('No data recieved for writeLog(): FlowDockBot.flows is empty')
+
+		var res = []
+
+		//loop through flows
+		for(var i in self.flows)
+
+			//loop through users
+			for(var x in self.flows[i].users)
+				res.push({
+					id: self.flows[i].users[x].id,
+					flow: self.flows[i].parameterized_name,
+					organization: self.config.FLOW_ORG,
+					nick: self.flows[i].users[x].nick,
+					last_activity: new Date(self.flows[i].users[x].last_activity).toISOString()
+				})
+
+		self.logData = res
+		self.emit('logData')
+
+		//do callback
+		if(fn)
+			fn(res)
+
+		return this
+	}
+
+	/**
+	 * Wrapper for getFlowUsers. Loops through this.flows and requests users
+	 * @param  {Function} fn Callback, gets passed to this.getFlowUsers
+	 * @return {FlowDockBot}      This instace for chaining
+	 */
+	this.getUsers = function(fn){
+		
+		for( var i in this.flows)
+			this.getFlowUsers(this.flows[i].parameterized_name, fn)
+
+		return this
+	}
+
+	/**
+	 * Backup logfile
+	 * @param  {Function} fn Callback. Takes a boolean param
+	 */
+	this.logBackup = function(fn){
+
+		var _self = self
+			fn = fn
+
+		//test if logfile currently being backed up
+		if(_self.flags.WRITING_BACKUP) return
+		_self.flags.WRITING_BACKUP = true
+
+		//get logfile line count
+		var cmd = 'wc "'+self.filename+'" | awk {\'print $1\'}'
+		exec(cmd, function FlowDockBot_logBackupExec(error, results) {
+
+			if(error)
+				throw new Error(error)
+
+			var res = parseInt(results.trim())
+				_fn = fn
+				_self = _self
+
+			//compare result with maxLogSize
+			if( res > _self.maxLogSize ){
+
+				//create backup
+				var cmd = 'mv "'+_self.filename+'" "'+_self.filename+'.bak"'
+				exec(cmd, function(err){
+
+					if(err)
+						throw new Error(err)
+
+					if(typeof(fn) == 'function')
+						_fn(true)
+
+
+					_self.flags.WRITING_BACKUP = false
+				})
+			}
+			else _self.flags.WRITING_BACKUP = false
+
+			//default run callback
+			if(typeof(fn) == 'function')
+				fn(res)
+		})		
+	}
+
+	/**
+	 * Callback for this.getFlows. Parses flow information to this.flows
+	 * @event flowsComplete
+	 * @param  {http.serverResponse}   resp The server response
+	 * @param  {callback} fn   Callback
+	 */
+	this.parseFlows = function(resp, cb){
+
+		var _data = ''
+		var _self = self
+		var _cb = cb
+
+		resp.setEncoding('utf8')
+		resp.on( 'data', function(chunk){
+
+			_data += chunk
+		})
+		resp.on( 'end', function(){
+
+			var j = JSON.parse(_data)
+			for(var i in j)
+				_self.flows[j[i].parameterized_name] = j[i]
+
+			_self.emit('flowsComplete')
+
+			if(_cb)
+				_cb(j)
+		})
+	}
+
+	/**
+	 * Callback for this.getFlowUsers. Parses flow user data to this.flows
+	 * @param  {http.serverResponse}   resp The server response
+	 * @param  {Function} cb   Callback Takes server.body json as param
+	 */
+	this.parseUsers = function(resp, cb){
+
+		var _data = ''
+		var _self = self
+		var _cb = cb
+
+		var flowName = resp.req.path.split('/')[3]
+
+		resp.setEncoding('utf8')
+		resp.on('data', function(chunk){
+			_data += chunk
+		})
+		resp.on('end', function(){
+
+			var j = JSON.parse(_data)
+			_self.flows[flowName].users = j
+			_self.countUserRequests--
+
+			if(_cb)
+				_cb(j)
+
+			if(!_self.countUserRequests)
+				_self.emit('usersComplete')
+		})
+	}
+
+	/**
+	 * Sets config and target url
+	 * @param {object} obj The config object
+	 */
+	this.setConfig = function(obj){
+
+		this.config = obj
+		this.target = 'https://' + this.config.FLOW_TOKEN + '@api.flowdock.com'
+	}
+
+	/**
+	 * Writes this.logData to log file
+	 * @param  {Function} fn Callback. Deftaul defined in this method
+	 * @return {FlowDockBot}      This instance for chaining
+	 */
+	this.writeData = function(fn){
+		
+		if(!Object.keys(self.logData).length)
+			throw new Error('FlowDockBot.logData is empty. No logData gathered')
+
+		//vars
+		var cb,
+			log = []
+			_self = self
+
+		//build up logfile data
+		self.logData.forEach(function logDataTestForEach(item, index){
+			log.push(JSON.stringify(item))
+		})
+
+		//construct callback
+		fn ? 
+			cb = fn : 
+			cb = function(err){ 
+				_self.emit('endLogWrite')
+				_self.emit('logFinished')
+		        _self.logData = new Array()
+		        console.log('********** data written')
+			}
+
+		//write log, clean up
+		fs.appendFile(this.filename, log.join('\n'), cb)
+        return self
+	}
+
+}
+util.inherits(FlowDockBot, events.EventEmitter)
+flowdock = new FlowDockBot()
+
+var _ = {
+
+	/**
+	 * Returns the FlowDockBot instance
+	 * @return {FlowDockBot} The current module instance
+	 */
+	getBot: function(){
+		return flowdock
+	},
+
+	/**
+	 * Sets the flowdock config.
+	 * @param {object} configYml Location of yaml config file
+	 * @return {object} return's this for chaining
+	 */
+	setConfig: function(obj){
+		flowdock.setConfig(obj)
+		return this
+	},
+
+	/**
+	 * main() method call
+	 * @param {string} filename Required. The filename relative to project root.
+	 * eg: 'logs/flowdock.log'
+	 * @return {object} return's this for chaining
+	 */
+	run: function(filename, timer){
+
+		if(!flowdock.config)
+			throw new Error('Please set the configuration for flowdock')
+
+		if(filename)
+			flowdock.filename = filename
+
+		flowdock.on('flowsComplete', flowdock.getUsers)
+			.on('usersComplete', flowdock.getLogData)
+			.on('logData', flowdock.writeData)
+			.on('endLogWrite', flowdock.logBackup)
+
+		setInterval(function(){
+			flowdock.getFlows()
+			}, timer)
+
+		return this
+	}
+}
+
+module.exports = _
