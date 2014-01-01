@@ -16,6 +16,7 @@
 	},
 	"dependencies": {
 		"mocha": "*",
+		"mongodb" : "*",
 		"npmlog": "*",
 		"yamljs": "*",
 		"rewire": "*"
