@@ -18,7 +18,7 @@ var FlowDockBot = function flowdockBot(){
 	this.config = false
 	this.countUserRequests=0
 	this.filename = process.cwd()+'/logs/flowdock.log'
-	this.flags = { //@see FlowDockBot.logBackup()
+	this.flags = { //@see Timing flag for FlowDockBot.logBackup()
 		'WRITING_BACKUP': false
 	}
 	this.flows = {}
