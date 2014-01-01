@@ -18,7 +18,7 @@ git clone https://github.com/cityindex/logsearch-flowdock-bot
 ```
 
 ####Cloud Foundry Setup
-Create a file called `flowdockConfig.yml` and define your API key & organisation
+Create a file in `conf/flowdock.yml` and define your API key & organisation
 like so:
 ```yaml
 ---
@@ -32,19 +32,17 @@ cf push
 ```
 
 ####Local Setup
-Create a file called `flowdockConfig.js` and define your API key & organisation
-like so:
-```js
-exports.organization = 'xxxxxxx';
-exports.token = 'xxxxxxx';
-```
+Define your configuration as above
 
 
 Run the bot locally
 ===================
 To run the bot locally from the command line, first install [lumberjack](https://github.com/jordansissel/lumberjack) then run:
-`node server.js local && /opt/lumberjack/bin/lumberjack.sh -config config.json`
-
+```
+npm install
+npm start
+/opt/lumberjack/bin/lumberjack.sh -config config.json
+```
 
 installing kibana dashboard
 ===========================
@@ -53,3 +51,11 @@ Once you have the logsearch vm running, you can install the dashboard by
  - click the `load` icon in the top
  - select `advanced`
  - upload `kibana.json` from this repo
+
+
+####Running Unit Tests
+Unit tests are done using [mocha](http://visionmedia.github.io/mocha/)
+To run tests:
+```
+make
+```
