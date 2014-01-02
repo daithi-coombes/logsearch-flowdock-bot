@@ -127,7 +127,22 @@ describe('Flowdock Bot:', function(){
 		})
 	})// end Flowdock API tests
 
-	
+
+	/**
+	 * Flowdock Model tests
+	 */
+	describe('Database', function(){
+
+		it('Should write to database', function(done){
+			done()
+		})
+
+		it('Should return unique events, after database write', function(done){
+			done();
+		})		
+	})// end Flowdock Model tests
+
+
 	/**
 	 * Logging tests
 	 */
@@ -205,18 +220,10 @@ describe('Flowdock Bot:', function(){
 				//try backup
 				bot.logBackup(function(ok){
 					if(ok)
-						done();
-				});
+						done()
+				})
 			})
 		})
-
-		it('Should update database', function(done){
-
-		})
-
-		it('Should only return unique events, after database update', function(done){
-
-		})
-	})// end Logging tests
+	})
 })
 
