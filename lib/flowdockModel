@@ -1,3 +1,61 @@
 #!/usr/bin/env node
 
-var db = require('mongodb')
+var csv = require('csv')
+	fs = require('fs')
+	filename = __dirname + '/../logs/latest.json'
+
+var _ = {
+
+	update: function(data, flow, org, fn){
+
+		var _data = require(filename),
+			res = []
+
+		console.log('Writing to: '+filename)
+
+		//check for org
+		if( _data[org] ){
+			console.log('org '+org+' found')
+
+			//check flow
+			if( _data[org][flow] ){
+				console.log('flow '+flow+' found')
+
+				//check last activities
+				for(var i in data)
+					if( _data[org][flow][data[i].id].last_activity != data[i].last_activity )
+						res.push( data[i] )
+					else
+						_data[org][flow][data[i].id] = data[i]
+			}
+
+			//add new flow
+			else{
+				_data[org][flow] = {}
+				for(var i in data)
+					_data[org][flow][data[i].id] = data[i]
+			}
+		}
+
+		//add new org
+		else{
+			_data = {}
+			_data[org] = {}
+			_data[org][flow] = {}
+
+			for(var i in data)
+				_data[org][flow][data[i].id] = data[i]
+		}
+
+		//write json to file
+		json = JSON.stringify(_data)
+		fs.writeFile( filename, json, function(err){
+			if(err)
+				console.log(err)
+			else
+				fn(res, flow, org)
+		})
+	}
+}
+
+module.exports = _

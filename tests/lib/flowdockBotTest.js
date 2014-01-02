@@ -21,19 +21,24 @@ describe('Flowdock Bot:', function(){
 		FLOW_TOKEN: '1234567890'
 	}//end static
 
+	//unique unit test globals
 	var _flowdock,
 		_mocks,
+		_model,
 		bot,
 		libDir,
 		mockResponse
-
+	// end unique unit test globals
 
 	beforeEach(function(){
 
+		//setup globals
 		libDir = process.cwd()
-		_flowdock = rewire(libDir+'/lib/flowdockBot')
+		_flowdock = rewire( libDir + '/lib/flowdockBot' )
+		_model = rewire( libDir + '/lib/flowdockModel' )
 		bot = _flowdock.getBot()
 
+		//setup mocks
 		mockResponse = require('../../lib/mockResponse').getMock(),
 		mockResponse.data = JSON.stringify(expected)
 		_mocks = {
@@ -58,9 +63,11 @@ describe('Flowdock Bot:', function(){
 			}
 		}
 
+		//rewire modules
 		_flowdock.setConfig(_config)
 		_flowdock.filename = process.cwd()+'/tests/logs/flowdock.log'
 		_flowdock.__set__(_mocks)
+		_model.filename = process.cwd()+'/tests/logs/latest.json'
 	})
 
 
@@ -134,6 +141,10 @@ describe('Flowdock Bot:', function(){
 	describe('Database', function(){
 
 		it('Should write to database', function(done){
+
+			_model.update(expectedUsers, "foo", "bar", function(user, flow, org){
+
+			})
 			done()
 		})
 

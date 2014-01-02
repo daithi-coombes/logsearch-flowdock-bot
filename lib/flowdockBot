@@ -5,7 +5,6 @@ var YAML = require('yamljs'),
 	exec = require('child_process').exec,
 	fs = require('fs'),
 	https = require('https'),
-	logger = require('npmlog'),
 	util = require('util'),
 	flowdock
 
