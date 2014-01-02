@@ -208,6 +208,13 @@ describe('Flowdock Bot:', function(){
 						done();
 				});
 			})
+		})
+
+		it('Should update database', function(done){
+
+		})
+
+		it('Should only return unique events, after database update', function(done){
 
 		})
 	})// end Logging tests
