@@ -28,6 +28,7 @@ var FlowDockBot = function flowdockBot(){
 	var self = this
 
 	this.getConfig = function(){
+
 		return this.config
 	}
 
@@ -275,6 +276,7 @@ var _ = {
 	 * @return {FlowDockBot} The current module instance
 	 */
 	getBot: function(){
+		
 		return flowdock
 	},
 

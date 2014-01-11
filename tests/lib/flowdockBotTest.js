@@ -1,5 +1,4 @@
 var assert = require('assert'),
-	events = require('events'),
 	fs = require('fs')
 	rewire = require('rewire'),
 	util = require('util')
@@ -35,7 +34,7 @@ describe('Flowdock Bot:', function(){
 		//setup globals
 		libDir = process.cwd()
 		_flowdock = rewire( libDir + '/lib/flowdockBot' )
-		_model = rewire( libDir + '/lib/flowdockModel' )
+		_model = rewire( libDir + '/lib/jsondb' )
 		bot = _flowdock.getBot()
 
 		//setup mocks
@@ -144,6 +143,12 @@ describe('Flowdock Bot:', function(){
 
 			_model.update(expectedUsers, "foo", "bar", function(user, flow, org){
 
+				var filename = process.cwd()+'/tests/logs/latest.json'
+				//check data was written
+				fs.readFile(filename, function(err, data){
+					console.log(filename)
+					console.log(data)
+				})
 			})
 			done()
 		})
