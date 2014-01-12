@@ -1,4 +1,5 @@
 var assert = require('assert'),
+	db = require(process.cwd()+'/lib/jsondb'),
 	fs = require('fs')
 	rewire = require('rewire'),
 	util = require('util')
@@ -139,23 +140,25 @@ describe('Flowdock Bot:', function(){
 	 */
 	describe('Database', function(){
 
-		it('Should write to database', function(done){
-
-			_model.update(expectedUsers, "foo", "bar", function(user, flow, org){
-
-				var filename = process.cwd()+'/tests/logs/latest.json'
-				//check data was written
-				fs.readFile(filename, function(err, data){
-					console.log(filename)
-					console.log(data)
-				})
-			})
+		it('Should create databse named by organisation', function(done){
 			done()
 		})
 
-		it('Should return unique events, after database write', function(done){
-			done();
-		})		
+		it('Should create tables for each flow', function(done){
+
+			//check table created
+			
+			//check fields match flow's user results
+			done()
+		})
+
+		it('Should populate flows with user data', function(done){
+			done()
+		})
+
+		it('Should return changed timestamps and add to log file', function(done){
+
+		})	
 	})// end Flowdock Model tests
 
 

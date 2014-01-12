@@ -47,6 +47,7 @@ var FlowDockBot = function flowdockBot(){
 
 	/**
 	 * Request user data for a flow
+	 * @see this.parseUsers()
 	 * @param  {string}   flowName Parametrized flow name
 	 * @param  {Function} fn       Callback. Default FlowDockBot.parseUsers
 	 * @return {FlowDockBot}            This instance for chaining
@@ -209,6 +210,9 @@ var FlowDockBot = function flowdockBot(){
 		resp.on('end', function(){
 
 			var j = JSON.parse(_data)
+			console.log(j)
+			console.log(flowName)
+			console.log(self)
 			_self.flows[flowName].users = j
 			_self.countUserRequests--
 
