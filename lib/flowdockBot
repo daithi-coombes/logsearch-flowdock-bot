@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 var YAML = require('yamljs'),
+	async = require('async'),
+	db = require(process.cwd()+'/lib/jsondb'),
 	events = require('events'),
 	exec = require('child_process').exec,
 	fs = require('fs'),
@@ -12,20 +14,20 @@ var FlowDockBot = function flowdockBot(){
 
 	events.EventEmitter.call(this)
 	this.setMaxListeners(0)
+	var self = this
 
 	this.backupLogFile = true
 	this.config = false
 	this.countUserRequests=0
 	this.filename = process.cwd()+'/logs/flowdock.log'
-	this.flags = { //@see Timing flag for FlowDockBot.logBackup()
-		'WRITING_BACKUP': false
+	this.flags = {
+		'WRITING_BACKUP': false, //@see Timing flag for FlowDockBot.logBackup()
+		'SYNC': false //@see this.setupDB()
 	}
 	this.flows = {}
 	this.logData = []
 	this.maxLogSize = 10000
 	this.target
-
-	var self = this
 
 	this.getConfig = function(){
 
@@ -210,9 +212,6 @@ var FlowDockBot = function flowdockBot(){
 		resp.on('end', function(){
 
 			var j = JSON.parse(_data)
-			console.log(j)
-			console.log(flowName)
-			console.log(self)
 			_self.flows[flowName].users = j
 			_self.countUserRequests--
 
@@ -232,6 +231,85 @@ var FlowDockBot = function flowdockBot(){
 
 		this.config = obj
 		this.target = 'https://' + this.config.FLOW_TOKEN + '@api.flowdock.com'
+	}
+
+	/**
+	 * Setup database
+	 * @param  {Function} fn [description]
+	 * @return {[type]}      [description]
+	 */
+	this.setupDB = function(fn){
+
+		var cols = ['id', 'nick', 'last_activity']
+
+		async.waterfall([
+
+			//create database
+			function(cb){
+
+				db.connect(self.config.FLOW_ORG, function(){
+					cb(null)
+				})
+			},
+
+			//get flows
+			function(cb){
+
+				self.getFlows(function(str){
+					j = JSON.parse(str)
+					var flows = []
+					j.forEach(function(flow){
+						flows.push(flow.parameterized_name)
+					})
+
+					cb(null, flows)
+				})
+			},
+
+			//create tables
+			function(flows, cb){
+				
+				var count = 0,
+					tables = []
+
+				flows.forEach(function(flow, i){
+
+					db.create('table', flow, function(tblname){
+						count++
+						tables.push(tblname)
+						if(count==flows.length)
+							cb(null, tables)
+					})
+				})
+			},
+
+			//create cols
+			function(tables, cb){
+
+				var count = 0,
+					length = tables.length
+
+				for (var i = 0; i < length; i++) {
+					
+					db.create('col', {table: tables[i], col: cols}, function(j){
+						var __tables = tables
+						count++
+						if(count==length)
+							cb(null)
+					})
+				}
+			}
+		],
+
+			//handle errors
+			function(err){
+				if(err)
+					throw new Error(err)
+				fn()
+			}
+		)
+
+		return self
 	}
 
 	/**
@@ -261,7 +339,7 @@ var FlowDockBot = function flowdockBot(){
 				_self.emit('endLogWrite')
 				_self.emit('logFinished')
 		        _self.logData = new Array()
-		        console.log('********** data written')
+
 			}
 
 		//write log, clean up
@@ -308,7 +386,8 @@ var _ = {
 		if(filename)
 			flowdock.filename = filename
 
-		flowdock.on('flowsComplete', flowdock.getUsers)
+		flowdock.setupDB() //create database
+			.on('flowsComplete', flowdock.getUsers)
 			.on('usersComplete', flowdock.getLogData)
 			.on('logData', flowdock.writeData)
 			.on('endLogWrite', flowdock.logBackup)

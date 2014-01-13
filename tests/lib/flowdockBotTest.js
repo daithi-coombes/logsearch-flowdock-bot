@@ -134,14 +134,35 @@ describe('Flowdock Bot:', function(){
 		})
 	})// end Flowdock API tests
 
-
 	/**
 	 * Flowdock Model tests
 	 */
 	describe('Database', function(){
 
-		it('Should create databse named by organisation', function(done){
-			done()
+		it('Should setup database', function(done){
+			this.timeout(0);
+
+			bot.setupDB(function(){
+					
+					fs.readFile(db.getDB().database, function(err, data){
+						var j = JSON.parse(data)
+						var test = { 
+							dbname: 'foo',
+							tables: { 
+								foo: { 
+									cols: ['id', 'nick', 'last_activity'],
+									data: []
+								},
+								bar: {
+									cols: ['id', 'nick', 'last_activity'],
+									data: []
+								} 
+ 							}
+ 						}
+						assert.deepEqual(j, test)
+						done()
+					})
+				})
 		})
 
 		it('Should create tables for each flow', function(done){
@@ -157,7 +178,7 @@ describe('Flowdock Bot:', function(){
 		})
 
 		it('Should return changed timestamps and add to log file', function(done){
-
+			done()
 		})	
 	})// end Flowdock Model tests
 
