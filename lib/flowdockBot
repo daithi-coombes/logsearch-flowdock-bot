@@ -218,8 +218,12 @@ var FlowDockBot = function flowdockBot(){
 			if(_cb)
 				_cb(j)
 
-			if(!_self.countUserRequests)
-				_self.emit('usersComplete')
+			var res = {
+				flow: flowName,
+				users: j
+			}
+
+			_self.emit('usersComplete', res)
 		})
 	}
 
@@ -255,14 +259,28 @@ var FlowDockBot = function flowdockBot(){
 			//get flows
 			function(cb){
 
-				self.getFlows(function(str){
-					j = JSON.parse(str)
-					var flows = []
-					j.forEach(function(flow){
-						flows.push(flow.parameterized_name)
-					})
+				self.getFlows(function(resp){
 
-					cb(null, flows)
+					var _data = ''
+					console.log(resp)
+					resp.setEncoding('utf8')
+					resp.on( 'data', function(chunk){
+
+						_data += chunk
+					})
+					resp.on('error', function(err){
+						self.error(err)
+					})
+					resp.on( 'end', function(){
+
+						var j = JSON.parse(_data)
+						var flows = []
+						j.forEach(function(flow){
+							flows.push(flow.parameterized_name)
+						})
+
+						cb(null, flows)
+					})
 				})
 			},
 
@@ -305,9 +323,110 @@ var FlowDockBot = function flowdockBot(){
 			function(err){
 				if(err)
 					throw new Error(err)
-				fn()
+
+				if(fn)
+					fn()
 			}
 		)
+
+		return self
+	}
+
+	this.updateDB = function(j, fn){
+		
+		var flow = j.flow,
+			ret = []
+
+		j.users.forEach(function(user, i){
+
+			db.query(flow, {where: ["id", user.id]}, function(res){
+
+				var old_date,
+					row = {},
+					res,
+					update = true
+
+				function parseDate(input) {
+					var parts = input.split('T');
+					var parts2 = parts[0].split('-');
+					return new Date(parts[0], parts[1]-1, parts[2]); // Note: months are 0-based
+				}
+
+				//if no results then store new activity
+				if(!res){
+					row = {
+						id: user.id,
+						flow: flow,
+						organization: self.config.FLOW_ORG,
+						nick: user.nick,
+						last_activity: new Date(user.last_activity).toISOString()
+					}
+					update = false
+				}
+
+				//compare last activities for the user
+				else{
+					var utc = new Date(res[0].last_activity);
+					var local = new Date(utc.getTime() + utc.getTimezoneOffset());
+
+					if(flow=='test' && res[0].nick=='daithi-coombes'){
+						console.log('Flow: '+flow)
+						console.log('	User: '+res[0].nick)
+						console.log('		last_activity db: '+res[0].last_activity)
+						console.log('		last_activity fm: '+utc.getTime())
+						console.log('		flow.user.last_activity: '+user.last_activity)
+					}
+					if(utc.getTime()<user.last_activity){
+						row = {
+							id: user.id,
+							flow: flow,
+							organization: self.config.FLOW_ORG,
+							nick: user.nick,
+							last_activity: user.last_activity
+						}
+					}
+					else
+						return self
+				}
+
+				str = JSON.stringify(row)
+				ret.push(str)
+				
+				//write to log file
+				fs.appendFile(self.filename, ret.join('\n')+'\n')
+
+				//if updating record in db
+				if(update){
+
+					var query = {
+						table: flow, 
+						data: {
+							where: ["id", user.id], 
+							set: ["last_activity", row.last_activity]
+						}
+					}
+					console.log('updating row')
+					console.log(query.data)
+					db.update('row', query, function(){
+						console.log('row updated')
+						if(i>=j.users.length-1)
+							if(fn)
+								fn(ret)
+							
+					})
+				}
+
+				//else insert new record
+				else
+					db.insert(flow, [row.id, row.nick, row.last_activity], function(){
+
+						if(i>=j.users.length-1)
+							if(fn)
+								fn(ret)
+							
+					})
+			})
+		})		
 
 		return self
 	}
@@ -343,7 +462,6 @@ var FlowDockBot = function flowdockBot(){
 			}
 
 		//write log, clean up
-		fs.appendFile(this.filename, log.join('\n'), cb)
         return self
 	}
 
@@ -388,8 +506,9 @@ var _ = {
 
 		flowdock.setupDB() //create database
 			.on('flowsComplete', flowdock.getUsers)
-			.on('usersComplete', flowdock.getLogData)
-			.on('logData', flowdock.writeData)
+			//.on('usersComplete', flowdock.getLogData)
+			.on('usersComplete', flowdock.updateDB)
+			//.on('logData', flowdock.writeData)
 			.on('endLogWrite', flowdock.logBackup)
 
 		setInterval(function(){

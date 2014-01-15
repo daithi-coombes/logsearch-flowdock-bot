@@ -4,7 +4,8 @@ var async = require('async'),
 	fs = require('fs'),
 	events = require('events'),
 	util = require('util'),
-	DB_WRITE = 1
+	DB_WRITE = 1,
+	queue = []
 
 /**
  * database class
@@ -83,10 +84,12 @@ var DB = function jsondb(){
 
 		//@private createCol
 		function createCol(){
+
+			self.state = DB_WRITE
 			self.getJSON(function(j){
 
 				if(!j.tables[_tblname]){
-					console.trace()
+					//console.trace()
 				}
 				var cols = j.tables[tblname].cols
 
@@ -115,7 +118,8 @@ var DB = function jsondb(){
 
 		//if self.state is locked
 		if(self.state==DB_WRITE)
-			self.on('db_set', createCol)
+			queue.push(createCol)
+
 		//if not locked, lock
 		else{
 			self.state = DB_WRITE
@@ -134,8 +138,8 @@ var DB = function jsondb(){
 
 		//@private create table
 		function createTable(){
-			var _this = this
 
+			self.state = DB_WRITE
 			self.getJSON(function(j){
 
 				j.tables[tblname] = {cols: [], data: []}
@@ -148,7 +152,7 @@ var DB = function jsondb(){
 
 		//if self.state is locked
 		if(self.state==DB_WRITE)
-			self.on('db_set', createTable)
+			queue.push(createTable)
 		
 		//if not locked, lock
 		else{
@@ -169,8 +173,6 @@ var DB = function jsondb(){
 		var cb = fn,
 			self = this
 			_db = getDBLocation(dbname)
-
-		flags.DELETING_DB = true
 
 		fs.exists(_db, function(exists){
 
@@ -273,7 +275,7 @@ var DB = function jsondb(){
 	 */
 	this.error = function(msg){
 
-		throw new Error(msg)
+		throw msg
 	}
 
 	/**
@@ -282,26 +284,47 @@ var DB = function jsondb(){
 	 */
 	this.getJSON = function(fn){
 
-		function readFile(){
-			fs.readFile(self.database, function(err, data){
-				fn(JSON.parse(data))
-			})
-		}
-		readFile()
+		//console.trace()
+		fs.readFile(self.database, {encoding: 'utf8'}, function(err, data){
+			var j = JSON.parse(data)
+
+			try{
+				fn(j)
+			}catch(e){
+				//console.trace()
+				self.error(e)
+			}
+
+			return
+		})
 		return this
+		/**
+		function readFile(){
 
-		/*
-		if(self.state==DB_WRITE){
-			self.state=0
-			self.on('db_set', readFile)
-		}
+
+				if(self.state==DB_WRITE){
+					self.state=0
+				}
+
+				if(queue.length){
+					next = queue.splice(queue.lenght-1, 1)[0]
+					next()
+				}	
+			}
+
+		readFile()
+		return
+
+		//if self.state is locked
+		if(self.state==DB_WRITE)
+			queue.push(readFile)
+		
+		//if not locked, lock
 		else{
-			self.state=DB_WRITE
+			self.state = DB_WRITE
 			readFile()
-		}
+		}*/
 
-		return self
-		*/
 	}
 
 	/**
@@ -312,16 +335,30 @@ var DB = function jsondb(){
 	 */
 	this.insert = function(tblname, row, fn){
 
-		self.getJSON(function(j){
+		function Insert(){
+			self.state = DB_WRITE
+			//console.log('db.insert: '+row)
+			self.getJSON(function(j){
 
-			//check num of cols matches
-			if( row.length!=j.tables[tblname].cols.length )
-				this.error('Invalid number of cols')
+				//check num of cols matches
+				if( row.length!=j.tables[tblname].cols.length )
+					self.error('Invalid number of cols')
 
-			j.tables[tblname].data.push(row)
-			self.setJSON(j, fn)
+				j.tables[tblname].data.push(row)
+				self.setJSON(j, fn)
 
-		})
+			})
+		}
+
+		//if self.state is locked
+		if(self.state==DB_WRITE)
+			queue.push(Insert)
+		
+		//if not locked, lock
+		else{
+			self.state = DB_WRITE
+			Insert()
+		}
 
 		return this
 	}
@@ -370,23 +407,45 @@ var DB = function jsondb(){
 	 */
 	this.update_row = function(tblname, data, fn){
 
-		self.getJSON(function(j){
+		function UpdateRow(){
 
-			var	table = j.tables[tblname],
-				cols = j.tables[tblname].cols,
-				rows = j.tables[tblname].data,
-				col_where = cols.indexOf(data.where[0]),
-				col_set = cols.indexOf(data.set[0])
+			self.state = DB_WRITE
+			self.getJSON(function(j){
 
-			rows.forEach(function(row, index){
-				if(row[col_where]==data.where[1])
-					rows[index][col_set]=data.set[1]
+				var	table = j.tables[tblname],
+					cols = j.tables[tblname].cols,
+					rows = j.tables[tblname].data,
+					col_where = cols.indexOf(data.where[0]),
+					col_set = cols.indexOf(data.set[0]),
+					updated = false
+
+				rows.forEach(function(row, index){
+					console.log('updating:')
+					console.log('where: '+row[col_where]+' == '+data.where[1])
+					if(row[col_where]==data.where[1]){
+						console.log('row found')
+						rows[index][col_set]=data.set[1]
+						console.log(rows[index])
+						var updated = true
+					}else
+						console.log('row not found')
+				})
+
+				j.tables[tblname].data = rows
+
+				self.setJSON(j, fn)
 			})
+		}
 
-			j.tables[tblname].data = rows
-
-			self.setJSON(j, fn)
-		})
+		//if self.state is locked
+		if(self.state==DB_WRITE)
+			queue.push(UpdateRow)
+		
+		//if not locked, lock
+		else{
+			self.state = DB_WRITE
+			UpdateRow()
+		}
 
 		return this
 	}
@@ -419,44 +478,76 @@ var DB = function jsondb(){
 	 * Query the database for a set of results
 	 * @param  {string}   tblname The table name
 	 * @param  {array}   query   An array of where objects
-	 * @param  {Function} fn      Callback
+	 * @param  {Function} fn      Callback. The callback will be passed an 
+	 * array of row objects, with cols as fields.
 	 */
 	this.query = function(tblname, query, fn){
 
-		self.getJSON(function(j){
+		function Query(){
+			self.state = DB_WRITE
+			//console.log('db.query: ')
+			//console.log(query)
+			self.getJSON(function(j){
 
-			var	table = j.tables[tblname],
-				cols = table.cols,
-				data = table.data,
-				res = [],
-				queries = []
+				var	table = j.tables[tblname],
+					cols = table.cols,
+					data = table.data,
+					res = [],
+					queries = []
 
-			//cast query to array (in single object passed as query arg)
-			Array.isArray(query) ?
-				queries = query :
-				queries = [query] 
+				//cast query to array (in single object passed as query arg)
+				Array.isArray(query) ?
+					queries = query :
+					queries = [query] 
 
 
-			queries.forEach(function(test, index){
-				data.forEach(function(row, i){
+				queries.forEach(function(test, index){
+					data.forEach(function(row, i){
 
-					col = cols.indexOf(test.where[0])
+						col = cols.indexOf(test.where[0])
 
-					if(col<0)
-						self.error('Unkown col: '+test.where[0])
+						if(col<0)
+							self.error('Unkown col: '+test.where[0])
 
-					if(row[col]==test.where[1]){
-						r = {}
-						cols.forEach(function(c, x){
-							r[c] = row[x]
-						})
-						res.push(r)
-					}
+						if(row[col]==test.where[1]){
+							r = {}
+							cols.forEach(function(c, x){
+								r[c] = row[x]
+							})
+							res.push(r)
+						}
+					})
 				})
-			})
 
-			fn(res)
-		})
+				if(!res.length)
+					res = null
+
+				if(self.state==DB_WRITE){
+					self.state=0
+				}
+
+				if(queue.length){
+					next = queue.splice(queue.lenght-1, 1)[0]
+					next()
+				}
+
+				if(fn)
+					fn(res)
+			})
+		}
+
+		//Query()
+		//return
+
+		//if self.state is locked
+		if(self.state==DB_WRITE)
+			queue.push(Query)
+		
+		//if not locked, lock
+		else{
+			self.state = DB_WRITE
+			Query()
+		}
 
 		return this
 	}
@@ -480,14 +571,19 @@ var DB = function jsondb(){
 	this.setJSON = function(json, fn){
 		
 		var _json = JSON.stringify(json, null, 4)
-		fs.writeFile(db.database, _json, {flag: 'w'}, function(){
+		fs.writeFile(db.database, _json, {flag: 'w', encoding: 'utf8'}, function(){
 
 			if(self.state==DB_WRITE){
 				self.state=0
-				self.emit('db_set')
 			}
 
-			fn(json)
+			if(queue.length){
+				next = queue.splice(queue.lenght-1, 1)[0]
+				next()
+			}
+
+			if(fn)
+				fn(json)
 		})
 
 		return this
@@ -496,6 +592,7 @@ var DB = function jsondb(){
 }
 util.inherits(DB, events.EventEmitter)
 var db = new DB()
+db.setMaxListeners(0)
 var queue = []
 
 /**
