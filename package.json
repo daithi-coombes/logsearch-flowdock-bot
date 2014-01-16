@@ -15,9 +15,9 @@
 		"test": "make"
 	},
 	"dependencies": {
+		"async": "*",
 		"mocha": "*",
-		"npmlog": "*",
-		"yamljs": "*",
-		"rewire": "*"
+		"rewire": "*",
+		"yamljs": "*"
 	}
 }

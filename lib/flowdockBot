@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 
 var YAML = require('yamljs'),
+	async = require('async'),
+	db = require(process.cwd()+'/lib/jsondb'),
 	events = require('events'),
 	exec = require('child_process').exec,
 	fs = require('fs'),
 	https = require('https'),
-	logger = require('npmlog'),
 	util = require('util'),
 	flowdock
 
@@ -13,22 +14,23 @@ var FlowDockBot = function flowdockBot(){
 
 	events.EventEmitter.call(this)
 	this.setMaxListeners(0)
+	var self = this
 
 	this.backupLogFile = true
 	this.config = false
 	this.countUserRequests=0
 	this.filename = process.cwd()+'/logs/flowdock.log'
-	this.flags = { //@see Timing flag for FlowDockBot.logBackup()
-		'WRITING_BACKUP': false
+	this.flags = {
+		'WRITING_BACKUP': false, //@see Timing flag for FlowDockBot.logBackup()
+		'SYNC': false //@see this.setupDB()
 	}
 	this.flows = {}
 	this.logData = []
 	this.maxLogSize = 10000
 	this.target
 
-	var self = this
-
 	this.getConfig = function(){
+
 		return this.config
 	}
 
@@ -42,11 +44,12 @@ var FlowDockBot = function flowdockBot(){
 		var _cb
 		fn ? _cb=fn : _cb=this.parseFlows
 		https.get(this.target+'/flows', _cb)
-		return this
+		return self
 	}
 
 	/**
 	 * Request user data for a flow
+	 * @see this.parseUsers()
 	 * @param  {string}   flowName Parametrized flow name
 	 * @param  {Function} fn       Callback. Default FlowDockBot.parseUsers
 	 * @return {FlowDockBot}            This instance for chaining
@@ -215,8 +218,12 @@ var FlowDockBot = function flowdockBot(){
 			if(_cb)
 				_cb(j)
 
-			if(!_self.countUserRequests)
-				_self.emit('usersComplete')
+			var res = {
+				flow: flowName,
+				users: j
+			}
+
+			_self.emit('usersComplete', res)
 		})
 	}
 
@@ -231,12 +238,214 @@ var FlowDockBot = function flowdockBot(){
 	}
 
 	/**
+	 * Setup database
+	 * @param  {Function} fn [description]
+	 * @return {[type]}      [description]
+	 */
+	this.setupDB = function(fn){
+
+		var cols = ['id', 'nick', 'last_activity']
+
+		async.waterfall([
+
+			//create database
+			function(cb){
+
+				db.connect(self.config.FLOW_ORG, function(){
+					cb(null)
+				})
+			},
+
+			//get flows
+			function(cb){
+
+				self.getFlows(function(resp){
+
+					var _data = ''
+					resp.setEncoding('utf8')
+					resp.on( 'data', function(chunk){
+						_data += chunk
+					})
+					resp.on('error', function(err){
+						self.error(err)
+					})
+					resp.on( 'end', function(){
+
+						try{
+							var j = JSON.parse(_data)
+							var flows = []
+						}catch(e){
+							throw e
+						}
+						
+						j.forEach(function(flow){
+							flows.push(flow.parameterized_name)
+						})
+
+
+						cb(null, flows)
+					})
+				})
+			},
+
+			//create tables
+			function(flows, cb){
+				var count = 0,
+					tables = []
+
+				flows.forEach(function(flow, i){
+
+					db.create('table', flow, function(tblname){
+						count++
+						tables.push(tblname)
+						if(count==flows.length)
+							cb(null, tables)
+					})
+				})
+			},
+
+			//create cols
+			function(tables, cb){
+
+				var count = 0,
+					length = tables.length
+
+				for (var i = 0; i < length; i++) {
+					
+					db.create('col', {table: tables[i], col: cols}, function(j){
+						var __tables = tables
+						count++
+						if(count==length)
+							cb(null)
+					})
+				}
+			}
+		],
+
+			//handle errors
+			function(err){
+				if(err)
+					throw new Error(err)
+				if(fn)
+					fn()
+			}
+		)
+
+		return self
+	}
+
+	/**
+	 * Update the database
+	 * @param  {json}   j  The json to update
+	 * @param  {Function} fn Callback
+	 */
+	this.updateDB = function(j, fn){
+		
+		var flow = j.flow
+
+		j.users.forEach(function(user, i){
+
+			db.query(flow, {where: ["id", user.id]}, function(res){
+
+				var old_date,
+					row = {},
+					res,
+					ret = [],
+					update = true
+
+				function parseDate(input) {
+					var parts = input.split('T');
+					var parts2 = parts[0].split('-');
+					return new Date(parts[0], parts[1]-1, parts[2]); // Note: months are 0-based
+				}
+
+				//if no results then store new activity
+				if(!res){
+					row = {
+						id: user.id,
+						flow: flow,
+						organization: self.config.FLOW_ORG,
+						nick: user.nick,
+						last_activity: new Date(user.last_activity).toISOString()
+					}
+					update = false
+				}
+
+				//compare last activities for the user
+				else{
+					var db_utc = new Date(res[0].last_activity);
+
+					//update row
+					if(db_utc.getTime()<user.last_activity){
+						
+						var user_utc = new Date(user.last_activity).toISOString()
+						row = {
+							id: user.id,
+							flow: flow,
+							organization: self.config.FLOW_ORG,
+							nick: user.nick,
+							last_activity: user_utc
+						}
+					}
+					else{
+						if(fn)
+							fn(null)
+						return self
+					}
+				}
+
+				str = JSON.stringify(row)
+				ret.push(str)
+
+				//write to log file
+				fs.appendFile(self.filename, ret.join('\n')+'\n')
+
+				//if updating record in db
+				if(update){
+
+					var query = {
+						table: flow, 
+						data: {
+							where: ["id", user.id], 
+							set: ["last_activity", row.last_activity]
+						}
+					}
+					
+					db.update('row', query, function(){
+						if(i>=j.users.length-1)
+							if(fn)
+								fn(ret)
+							
+					})
+				}
+
+				//else insert new record
+				else{
+					db.insert(flow, [row.id, row.nick, row.last_activity], function(){
+						if(i>=j.users.length-1){
+
+							if(fn){
+								fn(ret)
+							}
+						}
+					})
+				}
+			})
+		})		
+
+		return self
+	}
+
+	/**
 	 * Writes this.logData to log file
+	 * @deprecated Replaced with self::updateDB()
 	 * @param  {Function} fn Callback. Deftaul defined in this method
 	 * @return {FlowDockBot}      This instance for chaining
 	 */
 	this.writeData = function(fn){
+		return
 		
+		/**
 		if(!Object.keys(self.logData).length)
 			throw new Error('FlowDockBot.logData is empty. No logData gathered')
 
@@ -257,12 +466,12 @@ var FlowDockBot = function flowdockBot(){
 				_self.emit('endLogWrite')
 				_self.emit('logFinished')
 		        _self.logData = new Array()
-		        console.log('********** data written')
+
 			}
 
 		//write log, clean up
-		fs.appendFile(this.filename, log.join('\n'), cb)
         return self
+        */
 	}
 
 }
@@ -276,7 +485,17 @@ var _ = {
 	 * @return {FlowDockBot} The current module instance
 	 */
 	getBot: function(){
+		
 		return flowdock
+	},
+
+	/**
+	 * Return the database object
+	 * @return {jsondb}
+	 */
+	getDB: function(){
+
+		return db
 	},
 
 	/**
@@ -303,9 +522,11 @@ var _ = {
 		if(filename)
 			flowdock.filename = filename
 
-		flowdock.on('flowsComplete', flowdock.getUsers)
-			.on('usersComplete', flowdock.getLogData)
-			.on('logData', flowdock.writeData)
+		flowdock.setupDB() //create database
+			.on('flowsComplete', flowdock.getUsers)
+			//.on('usersComplete', flowdock.getLogData)
+			.on('usersComplete', flowdock.updateDB)
+			//.on('logData', flowdock.writeData)
 			.on('endLogWrite', flowdock.logBackup)
 
 		setInterval(function(){
