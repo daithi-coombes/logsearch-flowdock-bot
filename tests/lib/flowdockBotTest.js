@@ -22,67 +22,79 @@ describe('Flowdock Bot:', function(){
 	}//end static
 
 	//unique unit test globals
-	var _flowdock,
-		_mocks,
-		_model,
+	var flowdock,
+		mocks,
 		bot,
 		libDir,
 		mockResponse
 	// end unique unit test globals
 
-	beforeEach(function(){
+	beforeEach(function(done){
 
 		//setup globals
 		libDir = process.cwd()
-		_flowdock = rewire( libDir + '/lib/flowdockBot' )
+		flowdock = rewire( libDir + '/lib/flowdockBot' )
 		_model = rewire( libDir + '/lib/jsondb' )
-		bot = _flowdock.getBot()
+		bot = flowdock.getBot()
 
-		//setup mocks
+		//global mock object
 		mockResponse = require('../../lib/mockResponse').getMock(),
 		mockResponse.data = JSON.stringify(expected)
-		_mocks = {
+
+		//rewire mocks object
+		mocks = {
 			"https" : {
 				"get" : function(url, fn){
-					fn(mockResponse.data)
-					mockResponse.run()
+					
+					//get data from global mockResponse
+					var mock = require('../../lib/mockResponse').getMock()
+					mock.data = mockResponse.data
+
+					//return unique mock response
+					fn(mock)
+					mock.run()
 				},
 				"setEncoding" : function(type){
 					
-				}
-			},
-			"fs" : {
-				"appendFile": function(filename, data, fn){
-
-					//reset log line to arrayObject
-					var _data = '['
-						+ data.split('\n')
-						.join(',')
-						+ ']'
-
-					//call cb
-					fn(JSON.parse(_data))
 				}
 			}
 		}
 
 		//rewire modules
-		_flowdock.setConfig(_config)
-		_flowdock.filename = process.cwd()+'/tests/logs/flowdock.log'
-		_flowdock.__set__(_mocks)
-		_model.filename = process.cwd()+'/tests/logs/latest.json'
+		flowdock.setConfig(_config)
+		flowdock.getBot().filename = process.cwd()+'/tests/logs/flowdock.log'
+		flowdock.__set__(mocks)
+		
+		
+		flowdock.getBot().setupDB(function(){
+
+			done()
+		})
+	})
+	
+	afterEach(function(done){
+
+		fs.unlink(flowdock.getBot().filename, function(err){
+			if(flowdock.getDB().getDB().database){
+				fs.unlinkSync(flowdock.getDB().getDB().database)
+				done()
+			}
+			else{
+				done()
+			}
+		})
 	})
 
-
 	//config tests
-	it('Should set and get the config', function(){
+	it('Should set and get the config', function(done){
 
 		var expected = _config
-		var actual = _flowdock.setConfig(expected)
+		var actual = flowdock.setConfig(expected)
 			.getBot()
 			.config
 
 		assert.deepEqual(expected, actual)
+		done()
 	}) //end ocnfig tests
 
 
@@ -90,18 +102,26 @@ describe('Flowdock Bot:', function(){
 	 * Flowdock API tests
 	 */
 	describe('Flowdock API:', function(){
-
+		
 		it('Should make request for flows', function(done){
 
-			mockResponse.data = JSON.stringify(expected)
+			mockResponse.data = expected
 
 			bot.getFlows(function(resp){
-				var actual = JSON.parse(resp)
-				assert.deepEqual(actual, expected)
-				done()
+				var _data = ''
+				resp.on('data', function(resp){
+					_data += JSON.stringify(resp)
+				})
+				resp.on('end', function(){
+
+					var actual = JSON.parse(_data)
+
+					assert.deepEqual(actual, expected)
+					done()
+				})
 			})
 		})
-
+		
 		it('Should parse response for flows', function(done){
 
 			bot.parseFlows(mockResponse, function(resp){
@@ -114,9 +134,11 @@ describe('Flowdock Bot:', function(){
 		it('Should make request for a flows users', function(done){
 
 			bot.getFlowUsers('foo',function(resp){
-				var actual = JSON.parse(resp)
-				assert.deepEqual(actual, expected)
-				done()
+				resp.on('data', function(j){
+					var actual = JSON.parse(j)
+					assert.deepEqual(actual, expected)
+					done()
+				})
 			})
 		})
 
@@ -141,13 +163,12 @@ describe('Flowdock Bot:', function(){
 	 * Flowdock Model tests
 	 */
 	describe('Database', function(){
-
+		
 		it('Should setup database', function(done){
 			this.timeout(0);
 			
 			bot.setupDB(function(){
 					
-					/**		
 					fs.readFile(db.getDB().database, function(err, data){
 						var j = JSON.parse(data)
 						var test = { 
@@ -163,19 +184,29 @@ describe('Flowdock Bot:', function(){
 								} 
  							}
  						}
- 						console.log(j)
- 						console.log(test)
-						//assert.deepEqual(j, test)
+						assert.deepEqual(j, test)
 						done()
 					})
-*/
-done()
 				})
 		})
 
-		it('Should return changed timestamps and add to log file', function(done){
-			done()
-		})	
+		it('Should update db with new row', function(done){
+
+			var j = {
+				flow: 'foo',
+				users: expectedUsers
+			}
+			bot.updateDB(j, function(res){
+
+				fs.readFile(db.getDB().database, function(err, data){
+										var j = JSON.parse(data),
+						test = [[22222,"fooness","2013-05-08T16:07:15.680Z"],[33333,"barness","2013-03-31T19:22:36.248Z"]]
+
+					assert.deepEqual(j.tables['foo'].data, test)
+					done()	
+				})
+			})
+		})
 	})// end Flowdock Model tests
 
 
@@ -183,7 +214,7 @@ done()
 	 * Logging tests
 	 */
 	describe('Logs', function(){
-
+		
 		it('Should build array of log events', function(done){
 
 			//populate flows
@@ -220,20 +251,77 @@ done()
 			})
 			mockResponse.run()
 		})
-
+		
 		it('Should write data to log file', function(done){
+			//this.timeout(0);
 
-			var expected = [
-				{"id":22222,"flow":"foo","organization":"foo","nick":"fooness","last_activity":"2013-05-08T16:07:15.680Z"}
-				,{"id":33333,"flow":"foo","organization":"foo","nick":"barness","last_activity":"2013-03-31T19:22:36.248Z"}
-			],
-				actual = []
+			//create initial record in db
+			var j = {
+				flow: 'foo',
+				users: expectedUsers
+			},
+				count=0
+			
+			bot.updateDB(j, function(res){
 
-			bot.logData = expected
-			bot.writeData(function(actual){
-					assert.deepEqual(actual, expected)
-					done()
-				})
+				count++
+				//if finished looping through expectedUsers
+
+					fs.readFile(db.getDB().database, function(err, data){
+
+						var j_db = JSON.parse(data)
+						var testDate = new Date().getTime()
+
+						//change date
+						var oldDate = j.users[0].last_activity
+
+						j.users[0].last_activity = testDate
+
+						//check updated last_activity writes to log file
+						bot.updateDB(j, function(res){
+
+							
+							//check last line of log file
+							fs.readFile(bot.filename, 'utf-8', function(err, data){
+
+								var lines = data.trim()
+									.split('\n')
+								
+								//build test array
+								var test = []
+								j.users[0].last_activity = oldDate
+								j.users.forEach(function(user, i){
+
+									test.push(
+										JSON.stringify({
+											id: user.id,
+											flow: j.flow,
+											organization: _config.FLOW_ORG,
+											nick: user.nick,
+											last_activity: new Date(user.last_activity).toISOString()
+										})
+									)
+								}) 
+								
+								test.push(
+									JSON.stringify({
+										id: j.users[0].id,
+										flow: j.flow,
+										organization: _config.FLOW_ORG,
+										nick: j.users[0].nick,
+										last_activity: new Date(testDate).toISOString()
+									})
+								)
+
+								
+
+								assert.deepEqual(test, lines)
+
+								done()
+							})
+						})
+					})
+			})
 		})
 
 		it('Should create backup', function(done){

@@ -44,7 +44,7 @@ var FlowDockBot = function flowdockBot(){
 		var _cb
 		fn ? _cb=fn : _cb=this.parseFlows
 		https.get(this.target+'/flows', _cb)
-		return this
+		return self
 	}
 
 	/**
@@ -262,10 +262,8 @@ var FlowDockBot = function flowdockBot(){
 				self.getFlows(function(resp){
 
 					var _data = ''
-					console.log(resp)
 					resp.setEncoding('utf8')
 					resp.on( 'data', function(chunk){
-
 						_data += chunk
 					})
 					resp.on('error', function(err){
@@ -273,11 +271,17 @@ var FlowDockBot = function flowdockBot(){
 					})
 					resp.on( 'end', function(){
 
-						var j = JSON.parse(_data)
-						var flows = []
+						try{
+							var j = JSON.parse(_data)
+							var flows = []
+						}catch(e){
+							throw e
+						}
+						
 						j.forEach(function(flow){
 							flows.push(flow.parameterized_name)
 						})
+
 
 						cb(null, flows)
 					})
@@ -286,7 +290,6 @@ var FlowDockBot = function flowdockBot(){
 
 			//create tables
 			function(flows, cb){
-				
 				var count = 0,
 					tables = []
 
@@ -323,7 +326,6 @@ var FlowDockBot = function flowdockBot(){
 			function(err){
 				if(err)
 					throw new Error(err)
-
 				if(fn)
 					fn()
 			}
@@ -332,10 +334,14 @@ var FlowDockBot = function flowdockBot(){
 		return self
 	}
 
+	/**
+	 * Update the database
+	 * @param  {json}   j  The json to update
+	 * @param  {Function} fn Callback
+	 */
 	this.updateDB = function(j, fn){
 		
-		var flow = j.flow,
-			ret = []
+		var flow = j.flow
 
 		j.users.forEach(function(user, i){
 
@@ -344,6 +350,7 @@ var FlowDockBot = function flowdockBot(){
 				var old_date,
 					row = {},
 					res,
+					ret = [],
 					update = true
 
 				function parseDate(input) {
@@ -366,32 +373,30 @@ var FlowDockBot = function flowdockBot(){
 
 				//compare last activities for the user
 				else{
-					var utc = new Date(res[0].last_activity);
-					var local = new Date(utc.getTime() + utc.getTimezoneOffset());
+					var db_utc = new Date(res[0].last_activity);
 
-					if(flow=='test' && res[0].nick=='daithi-coombes'){
-						console.log('Flow: '+flow)
-						console.log('	User: '+res[0].nick)
-						console.log('		last_activity db: '+res[0].last_activity)
-						console.log('		last_activity fm: '+utc.getTime())
-						console.log('		flow.user.last_activity: '+user.last_activity)
-					}
-					if(utc.getTime()<user.last_activity){
+					//update row
+					if(db_utc.getTime()<user.last_activity){
+						
+						var user_utc = new Date(user.last_activity).toISOString()
 						row = {
 							id: user.id,
 							flow: flow,
 							organization: self.config.FLOW_ORG,
 							nick: user.nick,
-							last_activity: user.last_activity
+							last_activity: user_utc
 						}
 					}
-					else
+					else{
+						if(fn)
+							fn(null)
 						return self
+					}
 				}
 
 				str = JSON.stringify(row)
 				ret.push(str)
-				
+
 				//write to log file
 				fs.appendFile(self.filename, ret.join('\n')+'\n')
 
@@ -405,10 +410,8 @@ var FlowDockBot = function flowdockBot(){
 							set: ["last_activity", row.last_activity]
 						}
 					}
-					console.log('updating row')
-					console.log(query.data)
+					
 					db.update('row', query, function(){
-						console.log('row updated')
 						if(i>=j.users.length-1)
 							if(fn)
 								fn(ret)
@@ -417,14 +420,16 @@ var FlowDockBot = function flowdockBot(){
 				}
 
 				//else insert new record
-				else
+				else{
 					db.insert(flow, [row.id, row.nick, row.last_activity], function(){
+						if(i>=j.users.length-1){
 
-						if(i>=j.users.length-1)
-							if(fn)
+							if(fn){
 								fn(ret)
-							
+							}
+						}
 					})
+				}
 			})
 		})		
 
@@ -433,11 +438,14 @@ var FlowDockBot = function flowdockBot(){
 
 	/**
 	 * Writes this.logData to log file
+	 * @deprecated Replaced with self::updateDB()
 	 * @param  {Function} fn Callback. Deftaul defined in this method
 	 * @return {FlowDockBot}      This instance for chaining
 	 */
 	this.writeData = function(fn){
+		return
 		
+		/**
 		if(!Object.keys(self.logData).length)
 			throw new Error('FlowDockBot.logData is empty. No logData gathered')
 
@@ -463,6 +471,7 @@ var FlowDockBot = function flowdockBot(){
 
 		//write log, clean up
         return self
+        */
 	}
 
 }
@@ -478,6 +487,15 @@ var _ = {
 	getBot: function(){
 		
 		return flowdock
+	},
+
+	/**
+	 * Return the database object
+	 * @return {jsondb}
+	 */
+	getDB: function(){
+
+		return db
 	},
 
 	/**

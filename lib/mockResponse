@@ -1,20 +1,25 @@
 #!/usr/bin/env node
 
-var events = require('events');
-var util = require('util');
+var events = require('events')
+var util = require('util')
 
 /**
  * Mock https.serverResponse
  * @type {Object}
  */
-var mockResponse;
+var mockResponse
 var Eventer = function(){
-	events.EventEmitter.call(this);
+	events.EventEmitter.call(this)
 
-	this.data = '';
+	this.data = ''
+	this.count = 0
 
 	this.onData = function(){
-		this.emit('data', this.data);
+
+		//ensure data is only emitted once
+		this.count++
+		if(this.count<2)
+			this.emit('data', this.data)
 	}
 
 	this.setEncoding = function(){
@@ -22,21 +27,27 @@ var Eventer = function(){
 	}
 
 	this.onEnd = function(){
-		this.emit('end', this.data);
+
+		if(typeof this.data!='string')
+			this.data = JSON.stringify(this.data)
+
+		this.emit('end')
+		this.data = ''
+		//this.count = 0
 	}
 
 	this.run = function(){
-		this.onData();
-		this.onEnd();
+		this.onData()
+		this.onEnd()
 	}
-};
-util.inherits(Eventer, events.EventEmitter);
+}
+util.inherits(Eventer, events.EventEmitter)
 
 var _ = {
 
 	getMock: function(){
-		return new Eventer();
+		return new Eventer()
 	}
 }
 
-module.exports = _;
+module.exports = _

@@ -89,7 +89,6 @@ var DB = function jsondb(){
 			self.getJSON(function(j){
 
 				if(!j.tables[_tblname]){
-					//console.trace()
 				}
 				var cols = j.tables[tblname].cols
 
@@ -283,15 +282,22 @@ var DB = function jsondb(){
 	 * @param  {Function} fn Callback
 	 */
 	this.getJSON = function(fn){
-
-		//console.trace()
+		
 		fs.readFile(self.database, {encoding: 'utf8'}, function(err, data){
-			var j = JSON.parse(data)
+			
+			try{
+				var j = JSON.parse(data)
+			}
+			catch(e){
+				if(data==undefined)
+					fn(null)
+				else
+					self.error(e)
+			}
 
 			try{
 				fn(j)
 			}catch(e){
-				//console.trace()
 				self.error(e)
 			}
 
@@ -337,7 +343,6 @@ var DB = function jsondb(){
 
 		function Insert(){
 			self.state = DB_WRITE
-			//console.log('db.insert: '+row)
 			self.getJSON(function(j){
 
 				//check num of cols matches
@@ -420,15 +425,10 @@ var DB = function jsondb(){
 					updated = false
 
 				rows.forEach(function(row, index){
-					console.log('updating:')
-					console.log('where: '+row[col_where]+' == '+data.where[1])
 					if(row[col_where]==data.where[1]){
-						console.log('row found')
 						rows[index][col_set]=data.set[1]
-						console.log(rows[index])
 						var updated = true
-					}else
-						console.log('row not found')
+					}
 				})
 
 				j.tables[tblname].data = rows
@@ -484,9 +484,8 @@ var DB = function jsondb(){
 	this.query = function(tblname, query, fn){
 
 		function Query(){
+
 			self.state = DB_WRITE
-			//console.log('db.query: ')
-			//console.log(query)
 			self.getJSON(function(j){
 
 				var	table = j.tables[tblname],
@@ -531,8 +530,9 @@ var DB = function jsondb(){
 					next()
 				}
 
-				if(fn)
+				if(fn){
 					fn(res)
+				}
 			})
 		}
 
