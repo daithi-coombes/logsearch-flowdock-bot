@@ -253,18 +253,15 @@ describe('Flowdock Bot:', function(){
 		})
 		
 		it('Should write data to log file', function(done){
-			//this.timeout(0);
 
 			//create initial record in db
 			var j = {
 				flow: 'foo',
 				users: expectedUsers
-			},
-				count=0
-			
+			}
+
 			bot.updateDB(j, function(res){
 
-				count++
 				//if finished looping through expectedUsers
 
 					fs.readFile(db.getDB().database, function(err, data){
@@ -274,7 +271,6 @@ describe('Flowdock Bot:', function(){
 
 						//change date
 						var oldDate = j.users[0].last_activity
-
 						j.users[0].last_activity = testDate
 
 						//check updated last_activity writes to log file
@@ -284,9 +280,14 @@ describe('Flowdock Bot:', function(){
 							//check last line of log file
 							fs.readFile(bot.filename, 'utf-8', function(err, data){
 
-								var lines = data.trim()
+								//vars
+								var actual = []
+									lines = data.trim()
 									.split('\n')
-								
+									.forEach(function(line, i){
+										actual.push(JSON.parse(line))
+									})
+
 								//build test array
 								var test = []
 								j.users[0].last_activity = oldDate
@@ -298,25 +299,29 @@ describe('Flowdock Bot:', function(){
 											flow: j.flow,
 											organization: _config.FLOW_ORG,
 											nick: user.nick,
+											logged: actual[i].logged,
 											last_activity: new Date(user.last_activity).toISOString()
 										})
 									)
-								}) 
-								
+								})
 								test.push(
 									JSON.stringify({
 										id: j.users[0].id,
 										flow: j.flow,
 										organization: _config.FLOW_ORG,
 										nick: j.users[0].nick,
+										logged: actual[actual.length-1].logged,
 										last_activity: new Date(testDate).toISOString()
 									})
-								)
+								)//end build test array
 
-								
+								//reset actual array to strings
+								actual.forEach(function(event, i){
+									actual[i] = JSON.stringify(event)
+								})
 
-								assert.deepEqual(test, lines)
-
+								//test
+								assert.deepEqual(test, actual)
 								done()
 							})
 						})
