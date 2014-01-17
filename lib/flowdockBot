@@ -366,6 +366,7 @@ var FlowDockBot = function flowdockBot(){
 						flow: flow,
 						organization: self.config.FLOW_ORG,
 						nick: user.nick,
+						logged: new Date().toISOString(),
 						last_activity: new Date(user.last_activity).toISOString()
 					}
 					update = false
@@ -384,6 +385,7 @@ var FlowDockBot = function flowdockBot(){
 							flow: flow,
 							organization: self.config.FLOW_ORG,
 							nick: user.nick,
+							logged: new Date().toISOString(),
 							last_activity: user_utc
 						}
 					}
